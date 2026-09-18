@@ -55,6 +55,7 @@ describe("procedures that had no authorization", () => {
   let requestA: Request;
   let projectA: Project;
   let taskA: Task;
+  let looseRequest: Request;
 
   async function makeUser(email: string, role: string, teamId: string) {
     const user = await db.user.create({ data: { email, name: email.split("@")[0]! } });
@@ -97,6 +98,16 @@ describe("procedures that had no authorization", () => {
         agencyTeamId: branchA.id,
       },
     });
+    looseRequest = await db.request.create({
+      data: {
+        code: `REQ-LOOSE-${suffix}`,
+        title: "Untriaged",
+        description: "Not yet routed to any branch.",
+        projectType: "general",
+        organizationId: org.id,
+        submittedById: headA.id,
+      },
+    });
     taskA = await db.task.create({
       data: { code: `TSK-${suffix}`, title: "Branch A task", projectId: projectA.id },
     });
@@ -108,9 +119,9 @@ describe("procedures that had no authorization", () => {
   afterAll(async () => {
     const userIds = [headA?.id, headB?.id, memberA?.id].filter(Boolean) as string[];
     await db.timeLog.deleteMany({ where: { userId: { in: userIds } } });
-    await db.task.deleteMany({ where: { projectId: projectA?.id } });
-    await db.project.deleteMany({ where: { id: projectA?.id } });
-    await db.request.deleteMany({ where: { id: requestA?.id } });
+    await db.task.deleteMany({ where: { code: { contains: suffix } } });
+    await db.project.deleteMany({ where: { code: { contains: suffix } } });
+    await db.request.deleteMany({ where: { code: { contains: suffix } } });
     await db.membership.deleteMany({ where: { userId: { in: userIds } } });
     await db.user.deleteMany({ where: { id: { in: userIds } } });
     await db.team.deleteMany({ where: { id: { in: [branchA.id, branchB.id] } } });
@@ -185,6 +196,30 @@ describe("procedures that had no authorization", () => {
       await getCaller(memberA.id).timeLogs.add({ taskId: taskA.id, hours: 2, date: new Date() });
       const after = await db.task.findUniqueOrThrow({ where: { id: taskA.id } });
       expect(after.loggedHours.toNumber()).toBe(2);
+    });
+  });
+
+  describe("work that belongs to no branch", () => {
+    it("is reachable by anyone holding the action", async () => {
+      // A request before triage, or a project before it is given to a branch,
+      // belongs to nobody. Treating that as "every branch is excluded" locks
+      // everyone out of normal early-stage work instead of protecting anything.
+      // This is the case that made the existing attachment fixtures fail when
+      // the rule was first written the other way round.
+      const loose = await db.project.create({
+        data: {
+          code: `PRJ-LOOSE-${suffix}`,
+          name: "Unassigned project",
+          requestId: looseRequest.id,
+          organizationId: org.id,
+          agencyTeamId: null,
+        },
+      });
+      const looseTask = await db.task.create({
+        data: { code: `TSK-LOOSE-${suffix}`, title: "Unassigned task", projectId: loose.id },
+      });
+
+      await expect(getCaller(headB.id).timeLogs.listForTask(looseTask.id)).resolves.toEqual([]);
     });
   });
 

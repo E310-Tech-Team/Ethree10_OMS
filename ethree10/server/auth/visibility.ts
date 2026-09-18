@@ -34,11 +34,27 @@ export async function visibleTeamIds(userId: string): Promise<string[] | null> {
   return memberships.flatMap((membership) => (membership.teamId ? [membership.teamId] : []));
 }
 
-/** True when `teamId` is inside the caller's scope. Unrouted work (null) is agency-wide only. */
+/**
+ * True when `teamId` is inside the caller's scope.
+ *
+ * A record with NO branch is visible to anyone holding the action. This is the
+ * part worth being explicit about: the check exists to stop one branch reaching
+ * into another's work, and a record that belongs to no branch cannot belong to
+ * another one. Work sits unrouted or unassigned during intake — a request
+ * before triage, a project before it is given to a branch — and treating that
+ * as "everyone is excluded" locks everyone out of normal early-stage work
+ * rather than protecting anything.
+ *
+ * Note this is deliberately *not* the same rule as the requests list, which
+ * filters unrouted requests out with `routedTeamId: { in: teamIds }`. That is a
+ * list asking "what should I show you", and unrouted work is noise there. This
+ * is an access check asking "may you touch this one", and they are different
+ * questions with different right answers.
+ */
 export async function canSeeTeam(userId: string, teamId: string | null): Promise<boolean> {
   const scope = await visibleTeamIds(userId);
   if (scope === null) return true;
-  if (!teamId) return false;
+  if (!teamId) return true;
   return scope.includes(teamId);
 }
 
