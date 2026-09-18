@@ -7,7 +7,7 @@ import { db } from "@/server/db/client";
 import { s3, publicUrl, deleteFile, readHeadBytes } from "@/lib/storage";
 import { env } from "@/lib/env";
 import { AuditService } from "@/server/services/audit";
-import { requireAgencyAction } from "@/server/services/agency";
+import { assertCanAccessTask, assertCanAccessRequest } from "@/server/auth/visibility";
 
 /**
  * File uploads.
@@ -84,8 +84,8 @@ export interface AttachmentParent {
   deliverableVersionId?: string | null;
 }
 
-/** Exactly one parent, and you must be allowed to write to it. */
-async function assertCanAttach(actorId: string, parent: AttachmentParent): Promise<string> {
+/** Exactly one parent, named. Which one drives every check below. */
+function soleParent(parent: AttachmentParent): "task" | "request" | "deliverable" {
   const provided = [parent.taskId, parent.requestId, parent.deliverableVersionId].filter(Boolean);
   if (provided.length !== 1) {
     throw new TRPCError({
@@ -93,28 +93,65 @@ async function assertCanAttach(actorId: string, parent: AttachmentParent): Promi
       message: "Attach a file to exactly one of: a task, a request, or a deliverable version.",
     });
   }
+  if (parent.taskId) return "task";
+  if (parent.requestId) return "request";
+  return "deliverable";
+}
 
-  if (parent.taskId) {
-    const task = await db.task.findUnique({ where: { id: parent.taskId }, select: { id: true } });
-    if (!task) throw new TRPCError({ code: "NOT_FOUND", message: "Task not found." });
-    await requireAgencyAction(actorId, "task.update");
-    return `attachments/tasks/${parent.taskId}`;
-  }
-
-  if (parent.requestId) {
-    const request = await db.request.findUnique({ where: { id: parent.requestId }, select: { id: true } });
-    if (!request) throw new TRPCError({ code: "NOT_FOUND", message: "Request not found." });
-    await requireAgencyAction(actorId, "request.update");
-    return `attachments/requests/${parent.requestId}`;
-  }
-
+/**
+ * The deliverable version's task, which is what its permissions hang off.
+ * A version is a revision of a deliverable, and a deliverable belongs to a task.
+ */
+async function deliverableTaskId(versionId: string): Promise<{ versionId: string; taskId: string }> {
   const version = await db.deliverableVersion.findUnique({
-    where: { id: parent.deliverableVersionId! },
+    where: { id: versionId },
     select: { id: true, deliverable: { select: { taskId: true } } },
   });
   if (!version) throw new TRPCError({ code: "NOT_FOUND", message: "Deliverable version not found." });
-  await requireAgencyAction(actorId, "task.update");
-  return `attachments/deliverables/${version.id}`;
+  return { versionId: version.id, taskId: version.deliverable.taskId };
+}
+
+/**
+ * Exactly one parent, and you must be allowed to write to it.
+ *
+ * The record-level checks (assertCanAccessTask / assertCanAccessRequest) confirm
+ * both that the role holds the action and that the record is inside the caller's
+ * branches. Previously this asked only the first question, so a branch head
+ * holding `task.update` could attach to any task in the agency.
+ */
+async function assertCanAttach(actorId: string, parent: AttachmentParent): Promise<string> {
+  switch (soleParent(parent)) {
+    case "task":
+      await assertCanAccessTask(actorId, parent.taskId!, "task.update");
+      return `attachments/tasks/${parent.taskId}`;
+    case "request":
+      await assertCanAccessRequest(actorId, parent.requestId!, "request.update");
+      return `attachments/requests/${parent.requestId}`;
+    case "deliverable": {
+      const { versionId, taskId } = await deliverableTaskId(parent.deliverableVersionId!);
+      await assertCanAccessTask(actorId, taskId, "task.update");
+      return `attachments/deliverables/${versionId}`;
+    }
+  }
+}
+
+/**
+ * The same resolution for reading. Listing a parent's files is a read, so it
+ * takes the read action rather than the write one — a team member may look at
+ * the files on a request they are allowed to see without being allowed to
+ * change it.
+ */
+async function assertCanReadParent(actorId: string, parent: AttachmentParent): Promise<void> {
+  switch (soleParent(parent)) {
+    case "task":
+      return assertCanAccessTask(actorId, parent.taskId!, "task.read");
+    case "request":
+      return assertCanAccessRequest(actorId, parent.requestId!, "request.read");
+    case "deliverable": {
+      const { taskId } = await deliverableTaskId(parent.deliverableVersionId!);
+      return assertCanAccessTask(actorId, taskId, "task.read");
+    }
+  }
 }
 
 export class AttachmentService {
@@ -245,7 +282,12 @@ export class AttachmentService {
     return attachment;
   }
 
-  static async listFor(parent: AttachmentParent) {
+  static async listFor(actorId: string, parent: AttachmentParent) {
+    // This took no actor at all, so any signed-in user could list the files on
+    // any task, request or deliverable in the agency by passing its id. The
+    // other three procedures on this service all resolve the parent and check
+    // the caller; only the read path did not.
+    await assertCanReadParent(actorId, parent);
     return db.attachment.findMany({
       where: {
         taskId: parent.taskId ?? undefined,

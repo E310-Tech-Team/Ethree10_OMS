@@ -153,11 +153,18 @@ jobs:
       - name: Start MinIO
         # Run as a step, not a `services:` container: MinIO needs the argument
         # `server /data`, and a service container cannot set a command.
+        #
+        # From quay.io, pinned to a release. Docker Hub has now stopped serving
+        # this image to anonymous pulls ("pull access denied ... repository does
+        # not exist"), which broke every integration run on a green tree — the
+        # second time an unpinned MinIO tag has done that, after bitnami/minio
+        # :latest disappeared. quay.io is MinIO's own registry, and pinning a
+        # release means a tag moving upstream can no longer take CI down.
         run: |
           docker run -d --name minio -p 9000:9000 \
             -e MINIO_ROOT_USER=minioadmin \
             -e MINIO_ROOT_PASSWORD=minioadmin \
-            minio/minio server /data --address ":9000"
+            quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z server /data --address ":9000"
           for _ in $(seq 1 30); do
             if curl -sf http://127.0.0.1:9000/minio/health/live >/dev/null; then
               echo "MinIO ready"; exit 0
