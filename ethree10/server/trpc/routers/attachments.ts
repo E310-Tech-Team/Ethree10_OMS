@@ -37,7 +37,7 @@ export const attachmentsRouter = router({
 
   list: protectedProcedure
     .input(z.object(parent))
-    .query(({ input }) => AttachmentService.listFor(input)),
+    .query(({ ctx, input }) => AttachmentService.listFor(ctx.userId, input)),
 
   remove: protectedProcedure
     .input(z.object({ id: z.string() }))

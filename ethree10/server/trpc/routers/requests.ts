@@ -5,6 +5,7 @@ import { RequestStage, Urgency } from "@prisma/client";
 import { router, publicProcedure } from "../trpc";
 import { protectedProcedure } from "../procedures";
 import { db } from "@/server/db/client";
+import { visibleTeamIds } from "@/server/auth/visibility";
 import { can } from "@/server/auth/permissions";
 import { enforcePublicRateLimit } from "@/server/security/public-rate-limit";
 import { RequestService } from "@/server/services/request";
@@ -56,16 +57,6 @@ async function assertCanReadRequest(userId: string, requestId: string) {
   if (request.submittedById === userId) return request;
 
   throw new TRPCError({ code: "FORBIDDEN" });
-}
-
-async function visibleTeamIds(userId: string): Promise<string[] | null> {
-  const auth = await getAgencyAuthContext(userId);
-  if (hasAgencyWideScope(auth)) return null;
-  const memberships = await db.membership.findMany({
-    where: { userId, removedAt: null, acceptedAt: { not: null }, teamId: { not: null } },
-    select: { teamId: true },
-  });
-  return memberships.flatMap((membership) => membership.teamId ? [membership.teamId] : []);
 }
 
 export const requestsRouter = router({

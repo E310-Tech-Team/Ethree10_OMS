@@ -22,7 +22,7 @@ export async function createTRPCContext(opts: FetchCreateContextFnOptions) {
   };
 }
 
-function createAuthorize(userId: string | null) {
+export function createAuthorize(userId: string | null) {
   return async function authorize(action: Action) {
     if (!userId) {
       throw new TRPCError({
