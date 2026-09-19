@@ -13,7 +13,11 @@ const requiredHeaders = {
     "report-uri /api/csp-report",
     "report-to csp",
   ],
-  "reporting-endpoints": 'csp="/api/csp-report"',
+  // The group name and the path, not the whole literal. The URL is absolute
+  // when NEXT_PUBLIC_APP_URL is set and relative when it is not, so pinning the
+  // exact string asserted the development shape and failed against the correct
+  // production one — which is what it did on first deploy.
+  "reporting-endpoints": ["csp=", "/api/csp-report"],
 } as const;
 
 export {};
