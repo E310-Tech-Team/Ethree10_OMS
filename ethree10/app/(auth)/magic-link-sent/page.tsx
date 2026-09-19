@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { E310Logo } from "@/components/brand/e310-logo";
 
 export const metadata: Metadata = {
   title: "Check your email",
@@ -8,9 +9,15 @@ export const metadata: Metadata = {
 export default function MagicLinkSentPage() {
   return (
     <div className="w-full max-w-sm space-y-6 text-center">
-      <div>
-        <h1 className="text-3xl font-bold text-brand-500">E10</h1>
-      </div>
+      {/*
+        This was a hardcoded heading with the product name misspelled — a
+        typo, not a second brand. Every other surface renders the wordmark
+        through this component, so the one page a user lands on mid-sign-in
+        was the one page showing a different name than the page they came
+        from, at the exact moment they are deciding whether to trust the link
+        in their inbox.
+      */}
+      <E310Logo variant="dark" className="mx-auto h-8 w-auto" />
 
       <div className="rounded-lg border bg-card p-8 shadow-sm">
         <div className="mb-4 flex justify-center">
@@ -38,7 +45,10 @@ export default function MagicLinkSentPage() {
           access your account.
         </p>
         <p className="mt-4 text-xs text-muted-foreground">
-          The link expires in 24 hours. If you do not see it, check your spam
+          {/* config.ts sets the email provider's maxAge to 15 * 60. This said 24
+              hours, so anyone who came back to it later was told a dead link
+              was still good — and then blamed the platform when it failed. */}
+          The link expires in 15 minutes. If you do not see it, check your spam
           folder.
         </p>
       </div>

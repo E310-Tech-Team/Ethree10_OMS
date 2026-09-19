@@ -10,7 +10,20 @@ export const metadata: Metadata = {
   title: "Sign In",
 };
 
-export default function LoginPage() {
+/**
+ * `searchParams` is read here, in the server component, rather than with
+ * useSearchParams() in the form. Reading it in a client component opts the
+ * whole subtree into a Suspense boundary at build time; taking it as a prop
+ * keeps the page static-shell-friendly and the form a plain component.
+ */
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string | string[] }>;
+}) {
+  const { error } = await searchParams;
+  // Auth.js sends one code; a repeated query param would arrive as an array.
+  const errorCode = Array.isArray(error) ? error[0] : error;
   return (
     <AnimatedPage className="w-full max-w-md">
       <div className="space-y-6">
@@ -34,7 +47,7 @@ export default function LoginPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <LoginForm />
+              <LoginForm errorCode={errorCode ?? null} />
             </CardContent>
           </Card>
         </AnimatedSection>

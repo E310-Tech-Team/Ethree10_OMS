@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { authErrorCopy } from "@/lib/auth-errors";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,10 +28,16 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export function LoginForm() {
+/**
+ * `errorCode` is whatever Auth.js put in `?error=` after bouncing the user
+ * back here. It used to be ignored entirely, so a failed sign-in looked
+ * exactly like arriving at the page fresh.
+ */
+export function LoginForm({ errorCode }: { errorCode: string | null }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [quickLoginLoading, setQuickLoginLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(authErrorCopy(errorCode)?.message ?? null);
   const [confirmation, setConfirmation] = useState<string | null>(null);
   const [devDialogOpen, setDevDialogOpen] = useState(false);
   const [devEmail, setDevEmail] = useState("admin@ethree10.r4c.global");
@@ -49,11 +57,23 @@ export function LoginForm() {
     setConfirmation(null);
 
     try {
-      await signIn("email", {
+      // `redirect: false` so a failed send is visible. With the default
+      // redirect the browser navigates to the "check your inbox" page whatever
+      // happened, so an email that never left told the user to go and wait for
+      // it — and the setConfirmation call below it could never run.
+      const result = await signIn("email", {
         email: values.email,
         callbackUrl: "/dashboard",
+        redirect: false,
       });
+
+      if (result?.error) {
+        setError(authErrorCopy(result.error)?.message ?? null);
+        return;
+      }
+
       setConfirmation(`Magic link sent to ${values.email}. Open your inbox to continue.`);
+      router.push("/magic-link-sent");
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -64,7 +84,15 @@ export function LoginForm() {
   async function signInWithGoogle() {
     setError(null);
     setConfirmation(null);
-    await signIn("google", { callbackUrl: "/dashboard" });
+    // Same reason: on failure Auth.js redirects back to /login?error=..., which
+    // is now read on arrival, but handling it here as well means the message
+    // appears without a round trip when the failure is immediate.
+    const result = await signIn("google", { callbackUrl: "/dashboard", redirect: false });
+    if (result?.error) {
+      setError(authErrorCopy(result.error)?.message ?? null);
+      return;
+    }
+    if (result?.url) router.push(result.url);
   }
 
   async function quickLogin() {
