@@ -29,6 +29,62 @@ export type ViolationSummary = {
   sample: string | null;
 };
 
+/**
+ * Routes whose path carries a secret.
+ *
+ * /track/<token>, /invoice/<code> and /receipt/<code> are opened by a link
+ * alone — the code IS the authorisation, which is why those codes are drawn
+ * from the CSPRNG. A violation report names the document it happened on, so
+ * logging the URL verbatim writes a live bearer token into the application log,
+ * and from there into the output of any workflow that reads it back.
+ */
+const SECRET_SEGMENT_AFTER = new Set(["track", "invoice", "receipt"]);
+
+/** Long, opaque and meaningless to a reader: a cuid, a token, a storage key. */
+const OPAQUE = /^[A-Za-z0-9_-]{16,}$/;
+
+/**
+ * A URL reduced to the part that helps and stripped of the part that leaks.
+ *
+ * Deciding whether a CSP change is safe needs the ROUTE — which page, which
+ * directive. It never needs which invoice. So the query string and fragment go
+ * (both carry tokens), and any segment that is either a known secret position
+ * or simply opaque is masked.
+ *
+ * Anything unparseable is dropped entirely rather than passed through: a value
+ * we cannot reason about is not one to copy into a log.
+ */
+export function sanitizeUrl(value: unknown): string | null {
+  if (typeof value !== "string" || value.length === 0) return null;
+
+  // "inline", "eval", "data" and similar keywords are not URLs, and are the
+  // most important values in the whole report.
+  if (!value.includes("://")) return truncate(value);
+
+  let url: URL;
+  try {
+    // Parsed BEFORE truncating. Truncating first appends an ellipsis and makes
+    // a long URL unparseable, which would silently drop the field rather than
+    // shorten it — losing exactly the long URLs most worth looking at.
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+
+  const segments = url.pathname.split("/");
+  const masked = segments.map((segment, index) => {
+    if (!segment) return segment;
+    const previous = segments[index - 1];
+    if (previous && SECRET_SEGMENT_AFTER.has(previous)) return "<redacted>";
+    if (OPAQUE.test(segment)) return "<redacted>";
+    return segment;
+  });
+
+  // Origin and path only. No search, no hash. Truncated last, once it is
+  // already safe to look at.
+  return truncate(`${url.origin}${masked.join("/")}`);
+}
+
 export function truncate(value: unknown): string | null {
   if (typeof value !== "string" || value.length === 0) return null;
   return value.length > MAX_FIELD ? `${value.slice(0, MAX_FIELD)}…` : value;
@@ -77,9 +133,11 @@ export function summarizeViolation(body: Record<string, unknown>): ViolationSumm
       "violatedDirective",
       "violated-directive",
     ),
-    blocked: pick("blockedURL", "blocked-uri"),
-    document: pick("documentURL", "document-uri"),
-    source: pick("sourceFile", "source-file"),
+    blocked: sanitizeUrl(body["blockedURL"] ?? body["blocked-uri"]),
+    // Sanitized, not raw: these are the two fields that carry a page URL, and
+    // some of this app's page URLs are bearer tokens.
+    document: sanitizeUrl(body["documentURL"] ?? body["document-uri"]),
+    source: sanitizeUrl(body["sourceFile"] ?? body["source-file"]),
     line: typeof rawLine === "number" ? rawLine : null,
     sample: pick("scriptSample", "script-sample"),
   };

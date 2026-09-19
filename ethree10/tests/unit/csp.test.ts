@@ -187,3 +187,70 @@ describe("truncate", () => {
     expect(truncate(null)).toBeNull();
   });
 });
+
+import { sanitizeUrl } from "@/lib/csp-report";
+
+/**
+ * Some of this app's page URLs ARE bearer tokens. /track/<token>,
+ * /invoice/<code> and /receipt/<code> are opened by the link alone — which is
+ * why those codes are drawn from the CSPRNG. A violation report names the page
+ * it happened on, so logging it verbatim writes a live token into the
+ * application log, and from there into any workflow that reads the log back.
+ */
+describe("sanitizeUrl", () => {
+  it("redacts the secret segment of a bearer-token route", () => {
+    for (const [route, secret] of [
+      ["track", "cs0m3tr4ck1ngt0k3n"],
+      ["invoice", "INV-7H3KM2QPXZ9T"],
+      ["receipt", "RCPT-9F2BQ7MNXK4V"],
+    ]) {
+      const out = sanitizeUrl(`https://oms.ethree10.com/${route}/${secret}`);
+      expect(out).toBe(`https://oms.ethree10.com/${route}/<redacted>`);
+      expect(out).not.toContain(secret);
+    }
+  });
+
+  it("drops the query string and fragment", () => {
+    // Both carry tokens — a magic-link callback is a query string.
+    const out = sanitizeUrl("https://oms.ethree10.com/login?token=super-secret#frag");
+    expect(out).toBe("https://oms.ethree10.com/login");
+    expect(out).not.toContain("super-secret");
+  });
+
+  it("masks opaque ids anywhere in the path", () => {
+    // Deciding whether a policy change is safe needs to know WHICH PAGE, never
+    // which record.
+    expect(sanitizeUrl("https://oms.ethree10.com/projects/clx8k2p0000abcdef12345")).toBe(
+      "https://oms.ethree10.com/projects/<redacted>",
+    );
+  });
+
+  it("keeps ordinary route names readable", () => {
+    // Over-redacting makes the report useless, which is its own failure.
+    expect(sanitizeUrl("https://oms.ethree10.com/team/assignments")).toBe(
+      "https://oms.ethree10.com/team/assignments",
+    );
+  });
+
+  it("passes through the keywords that are not URLs", () => {
+    // "inline" and "eval" are the two values that decide the nonce migration.
+    for (const keyword of ["inline", "eval", "data", "self"]) {
+      expect(sanitizeUrl(keyword)).toBe(keyword);
+    }
+  });
+
+  it("drops anything it cannot parse rather than copying it through", () => {
+    expect(sanitizeUrl("https://[not a url")).toBeNull();
+    expect(sanitizeUrl(null)).toBeNull();
+    expect(sanitizeUrl(42)).toBeNull();
+  });
+
+  it("shortens a long URL instead of dropping it", () => {
+    // Truncating before parsing would append an ellipsis, break the parse, and
+    // silently discard the field — losing the long URLs most worth seeing.
+    const long = `https://oms.ethree10.com/${"segment/".repeat(80)}end`;
+    const out = sanitizeUrl(long);
+    expect(out).not.toBeNull();
+    expect(out!.length).toBeLessThanOrEqual(MAX_FIELD + 1);
+  });
+});

@@ -1,0 +1,71 @@
+name: CSP violations
+
+# What the Content Security Policy would have blocked, read off the VPS.
+#
+# Read-only by construction: it opens log files and prints. Nothing here
+# writes, restarts a service, or changes configuration, so it is safe to run at
+# any time without thinking about consequences first.
+#
+# It exists because the policy runs in Report-Only mode and the only way to
+# know whether enforcing it is safe is to look at what it would have stopped.
+# Until recently there was nothing to look at — the policy named no reporting
+# endpoint at all, so it neither blocked nor recorded. This is the other half
+# of that fix: somewhere for the reports to go, and a way to read them back.
+#
+# The URLs in the output are redacted where they are written, not here. Three
+# of this app's routes carry a bearer token in the path — /track/<token>,
+# /invoice/<code>, /receipt/<code> — so a violation's document URL is a
+# credential. sanitizeUrl in lib/csp-report.ts masks those segments and drops
+# every query string before anything reaches the log, which is what makes it
+# safe to print an application log into a CI run that anyone with repository
+# access can read.
+on:
+  workflow_dispatch:
+    inputs:
+      log_file:
+        description: "Log files to read, comma separated. Blank uses the web log and its most recent rotation."
+        type: string
+        required: false
+
+env:
+  SSH_USER: root
+
+jobs:
+  violations:
+    name: Read CSP violations on the VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install SSH key
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/ethree10_deploy_key
+          chmod 600 ~/.ssh/ethree10_deploy_key
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Report violations
+        # The input arrives as an environment variable rather than being
+        # interpolated into the script body. A `${{ inputs.* }}` expression is
+        # substituted into the shell before it runs, so a crafted value becomes
+        # a command on a box this key has root on. Through the environment it
+        # stays a string.
+        env:
+          LOG_FILE: ${{ inputs.log_file }}
+        run: |
+          set -euo pipefail
+
+          # Paths only. Anything else is a mistake or an attempt, and neither
+          # should reach a remote shell.
+          if [ -n "${LOG_FILE}" ] && ! printf '%s' "${LOG_FILE}" | grep -Eq '^[A-Za-z0-9_,./-]+$'; then
+            echo "log_file may contain only path characters and commas." >&2
+            exit 1
+          fi
+
+          # The script exits non-zero when it finds no log file at all, which is
+          # deliberate and must stay loud: "could not look" and "looked and found
+          # nothing" are different answers, and only one of them says enforcing
+          # is safe. A quiet pass on a missing log is how a policy gets turned on
+          # against a report that never read anything.
+          ssh -i ~/.ssh/ethree10_deploy_key "${SSH_USER}@${{ secrets.VPS_HOST }}" \
+            "cd /srv/ethree10/ethree10 && CSP_LOG_FILE='${LOG_FILE}' pnpm csp:violations"
