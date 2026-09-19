@@ -27,6 +27,15 @@ import { parseViolationLog, groupViolations } from "../lib/csp-log";
  */
 const DEFAULT_LOGS = ["/var/log/ethree10/web.log", "/var/log/ethree10/web.log.1"];
 
+/**
+ * Below this, the report describes what it found and draws no conclusions.
+ *
+ * A live policy across real traffic produces violations in the hundreds if it
+ * produces any at all; a handful means reports are not arriving, which is a
+ * different finding from a clean policy and must not be reported as one.
+ */
+const MIN_SAMPLE = 20;
+
 function logFiles(): string[] {
   const override = process.env["CSP_LOG_FILE"];
   return override ? override.split(",").map((path) => path.trim()) : DEFAULT_LOGS;
@@ -91,6 +100,24 @@ function main() {
   const evals = groups.filter((group) => group.blocked === "eval");
 
   console.log("WHAT THIS MEANS FOR ENFORCING\n");
+
+  // An absence only means something once enough reports have arrived to expect
+  // a presence. The first run of this found exactly one violation — a manual
+  // curl — and went on to say there were no inline-script violations, which is
+  // true and tells you nothing, while reading exactly like evidence that the
+  // nonce migration could be skipped. Conclusions are gated on a sample.
+  if (violations.length < MIN_SAMPLE) {
+    console.log(`  SAMPLE TOO SMALL. ${violations.length} violations is not enough to`);
+    console.log("  conclude anything, and an absence here is not evidence of absence.");
+    console.log("  Real browsers deliver reports out-of-band and on a delay; a handful");
+    console.log("  of entries usually means delivery is not working rather than that");
+    console.log("  the policy is clean.");
+    console.log("\n  Leave it collecting under real traffic and run this again.\n");
+    console.log("  The causes listed above are still real and worth reading — what");
+    console.log("  cannot be trusted yet is anything the report does NOT show.");
+    return;
+  }
+
   if (evals.length > 0) {
     console.log(`  'unsafe-eval' is still in use (${evals.reduce((n, g) => n + g.count, 0)} times).`);
     console.log("  It was removed from the production policy after measuring zero");
