@@ -1,16 +1,4 @@
-const contentSecurityPolicyReportOnly = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "frame-ancestors 'none'",
-  "object-src 'none'",
-  "form-action 'self' https://checkout.paystack.com",
-  "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.paystack.co https://*.posthog.com https://app.posthog.com",
-  "style-src 'self' 'unsafe-inline'",
-  "font-src 'self' data:",
-  "connect-src 'self' https://*.ingest.sentry.io https://*.sentry.io https://api.paystack.co https://checkout.paystack.com https://*.posthog.com https://app.posthog.com",
-  "frame-src https://checkout.paystack.com",
-].join("; ");
+import { contentSecurityPolicy, reportingEndpoints } from "./lib/csp.mjs";
 
 export const securityHeaders = [
   {
@@ -29,9 +17,19 @@ export const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=(), usb=(), bluetooth=(), payment=(self)",
   },
+  // Names the endpoint group used by `report-to` in the policy itself. Without
+  // this header the modern reporting mechanism has nowhere to send anything,
+  // which is half of why nothing was being collected.
+  {
+    key: "Reporting-Endpoints",
+    value: reportingEndpoints(),
+  },
+  // Still Report-Only. The point of this change is to start collecting
+  // evidence; enforcing without it is how you break a live journey to fix a
+  // problem you have not measured.
   {
     key: "Content-Security-Policy-Report-Only",
-    value: contentSecurityPolicyReportOnly,
+    value: contentSecurityPolicy(),
   },
 ];
 

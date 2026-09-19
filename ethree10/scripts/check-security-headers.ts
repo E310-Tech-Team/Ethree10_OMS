@@ -3,7 +3,17 @@ const requiredHeaders = {
   "x-content-type-options": "nosniff",
   "referrer-policy": "strict-origin-when-cross-origin",
   "permissions-policy": ["camera=()", "microphone=()", "geolocation=()"],
-  "content-security-policy-report-only": ["default-src 'self'", "frame-ancestors 'none'", "object-src 'none'"],
+  // The reporting directives are checked because their absence is invisible:
+  // a Report-Only policy with nowhere to report looks identical to a working
+  // one from the outside, and that is exactly how this shipped for months.
+  "content-security-policy-report-only": [
+    "default-src 'self'",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "report-uri /api/csp-report",
+    "report-to csp",
+  ],
+  "reporting-endpoints": 'csp="/api/csp-report"',
 } as const;
 
 export {};
