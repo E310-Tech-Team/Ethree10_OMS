@@ -92,7 +92,12 @@ export const invoicesRouter = router({
         organizationId: z.string(),
         projectId: z.string().optional(),
         currency: z.enum(["NGN", "USD"]),
-        dueAt: z.string().optional(),
+        // z.coerce.date() rather than a bare string: the value went straight
+        // into `new Date(input.dueAt)`, so "next Tuesday" became an Invalid
+        // Date and failed at the database with a Prisma error instead of a
+        // message naming the field. Every other date input in the app already
+        // coerces; this one was missed.
+        dueAt: z.coerce.date().optional(),
         lineItems: z.array(
           z.object({
             description: z.string().min(1),
@@ -123,7 +128,7 @@ export const invoicesRouter = router({
               currency: input.currency,
               amount: totalAmount,
               lineItems: input.lineItems,
-              dueAt: input.dueAt ? new Date(input.dueAt) : null,
+              dueAt: input.dueAt ?? null,
               status: "draft",
             },
           }),

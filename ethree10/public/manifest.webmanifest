@@ -1,7 +1,7 @@
 {
-  "name": "Ethree10 OMS",
-  "short_name": "Ethree10",
-  "description": "Operations Management System for Ethree10",
+  "name": "E310 \u2014 Operating Platform",
+  "short_name": "E310",
+  "description": "E310 \u2014 the all-in-one operating platform for requests, delivery and reporting.",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#F8FAFC",
