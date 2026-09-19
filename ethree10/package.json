@@ -48,7 +48,8 @@
     "assign:branch-heads": "tsx scripts/assign-branch-heads.ts",
     "merge:branches": "tsx scripts/merge-branches.ts",
     "memberships": "tsx scripts/memberships.ts",
-    "ops:report": "tsx scripts/ops-report.ts"
+    "ops:report": "tsx scripts/ops-report.ts",
+    "csp:violations": "tsx scripts/csp-violations.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1058.0",
