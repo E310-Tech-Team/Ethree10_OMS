@@ -47,20 +47,12 @@ export default function RootLayout({
           <TRPCProvider>{children}</TRPCProvider>
         </PostHogProvider>
         <Toaster />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').then(
-                    function(registration) { console.log('ServiceWorker registration successful'); },
-                    function(err) { console.log('ServiceWorker registration failed: ', err); }
-                  );
-                });
-              }
-            `,
-          }}
-        />
+        {/*
+          Was an inline script. Inline scripts are why script-src still needs
+          'unsafe-inline'; this was the only one of the three on a page that was
+          ours to move. See lib/csp.mjs.
+        */}
+        <script src="/sw-register.js" defer />
       </body>
     </html>
   );
