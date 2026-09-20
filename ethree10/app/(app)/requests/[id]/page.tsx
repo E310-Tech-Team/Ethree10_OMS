@@ -26,27 +26,19 @@ import { Copy, RefreshCw, ShieldOff } from "lucide-react";
 import { labelForTaskType } from "@/lib/request-types";
 import { StatusPill } from "@/components/ui-ext/status-pill";
 import { UrgencyTag } from "@/components/ui-ext/urgency-tag";
+import {
+  nextStagesFor,
+  canApprove,
+  canRequestClarification,
+  canReject,
+  stageGuidance,
+} from "@/lib/request-stages";
 import { useAgencyContext } from "@/components/providers/agency-provider";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
 import { humanize } from "@/lib/constants";
 import { ProposalsTab } from "./proposals-tab";
 import { BRANCH_LEAD_ROLES } from "@/server/auth/role-groups";
 import type { Role } from "@prisma/client";
-
-// Allowed onward transitions per stage (mirrors the server-side guard).
-const NEXT_STAGES: Partial<Record<RequestStage, RequestStage[]>> = {
-  submitted: ["under_review", "needs_clarification", "rejected", "cancelled", "pending_approval"],
-  needs_clarification: ["under_review", "rejected", "cancelled"],
-  pending_approval: ["under_review", "scoping", "rejected", "cancelled"],
-  under_review: ["scoping", "rejected", "on_hold", "cancelled"],
-  scoping: ["proposal", "approved", "on_hold", "cancelled", "pending_approval"],
-  proposal: ["approved", "rejected", "on_hold", "cancelled"],
-  approved: ["in_progress", "cancelled"],
-  in_progress: ["in_review", "on_hold", "cancelled"],
-  in_review: ["delivered", "in_progress"],
-  delivered: ["closed", "in_review"],
-  on_hold: ["under_review", "scoping", "in_progress", "cancelled"],
-};
 
 export default function RequestDetailPage() {
   const params = useParams();
@@ -109,7 +101,21 @@ export default function RequestDetailPage() {
     return <div className="py-12 text-center text-destructive">Request not found.</div>;
   }
 
-  const nextStages = NEXT_STAGES[request.stage] ?? [];
+  // Every one of these comes from lib/request-stages.ts, which the server
+  // guard also reads. The panel used to render all three buttons at every
+  // stage, so a request already in progress offered Accept, Request
+  // clarification and Reject — and the server refused all three.
+  const nextStages = nextStagesFor(request.stage);
+  const showApprove = canApprove(request.stage);
+  const showClarify = canRequestClarification(request.stage);
+  const showReject = canReject(request.stage);
+  const guidance = stageGuidance({
+    stage: request.stage,
+    hasProject: Boolean(request.project),
+    projectId: request.project?.id,
+    projectCode: request.project?.code,
+    hasTasks: request.project ? request.project._count.tasks > 0 : undefined,
+  });
 
   return (
     <div className="space-y-6">
@@ -371,11 +377,37 @@ export default function RequestDetailPage() {
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2">
-                  <Button type="button" onClick={() => approve.mutate({ id })} disabled={approve.isPending}>Accept request</Button>
-                  <Button type="button" variant="outline" onClick={() => transition.mutate({ id, toStage: "needs_clarification", note: window.prompt("What clarification is needed?") || undefined })}>Request clarification</Button>
-                  <Button type="button" variant="destructive" onClick={() => { const reason = window.prompt("Reason for rejection"); if (reason?.trim()) reject.mutate({ id, reason }); }}>Reject request</Button>
+                {/*
+                  What to do next, in words. Hiding the impossible buttons stops
+                  the wrong action; this one says the right one — which is often
+                  on the project rather than on this page.
+                */}
+                <div className="rounded-lg border border-border/60 bg-muted/40 p-3 text-sm">
+                  <p className="font-medium">{guidance.headline}</p>
+                  <p className="mt-1 text-muted-foreground">{guidance.action}</p>
+                  {guidance.link && (
+                    <Link
+                      href={guidance.link.href}
+                      className="mt-2 inline-flex items-center gap-1 font-medium text-brand-600 underline underline-offset-4"
+                    >
+                      {guidance.link.label} →
+                    </Link>
+                  )}
                 </div>
+
+                {(showApprove || showClarify || showReject) && (
+                  <div className="grid grid-cols-1 gap-2">
+                    {showApprove && (
+                      <Button type="button" onClick={() => approve.mutate({ id })} disabled={approve.isPending}>Accept request</Button>
+                    )}
+                    {showClarify && (
+                      <Button type="button" variant="outline" onClick={() => transition.mutate({ id, toStage: "needs_clarification", note: window.prompt("What clarification is needed?") || undefined })}>Request clarification</Button>
+                    )}
+                    {showReject && (
+                      <Button type="button" variant="destructive" onClick={() => { const reason = window.prompt("Reason for rejection"); if (reason?.trim()) reject.mutate({ id, reason }); }}>Reject request</Button>
+                    )}
+                  </div>
+                )}
 
                 {nextStages.length > 0 && (
                   <div className="space-y-1.5">

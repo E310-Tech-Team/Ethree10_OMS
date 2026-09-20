@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { ALLOWED_TRANSITIONS, APPROVABLE_FROM } from "@/lib/request-stages";
 import { Prisma, type RequestStage, type Urgency } from "@prisma/client";
 import { db } from "@/server/db/client";
 import { AuditService } from "@/server/services/audit";
@@ -25,22 +26,10 @@ const PUBLIC_TOKEN_DAYS = 90;
 const publicTokenExpiry = () => new Date(Date.now() + PUBLIC_TOKEN_DAYS * 24 * 60 * 60 * 1000);
 
 
-export const ALLOWED_TRANSITIONS: Record<RequestStage, RequestStage[]> = {
-  submitted: ["under_review", "needs_clarification", "rejected", "cancelled", "pending_approval"],
-  needs_clarification: ["under_review", "rejected", "cancelled"],
-  pending_approval: ["under_review", "scoping", "rejected", "cancelled"],
-  under_review: ["scoping", "rejected", "on_hold", "cancelled"],
-  scoping: ["proposal", "approved", "on_hold", "cancelled", "pending_approval"],
-  proposal: ["approved", "rejected", "on_hold", "cancelled"],
-  approved: ["in_progress", "cancelled"],
-  in_progress: ["in_review", "on_hold", "cancelled"],
-  in_review: ["delivered", "in_progress"],
-  delivered: ["closed", "in_review"],
-  closed: [],
-  rejected: [],
-  on_hold: ["under_review", "scoping", "in_progress", "cancelled"],
-  cancelled: [],
-};
+// The transition table moved to lib/request-stages.ts so the screen can use
+// the same one. It was duplicated by hand in the request detail page, which
+// is how the triage panel came to offer actions the server refuses.
+export { ALLOWED_TRANSITIONS } from "@/lib/request-stages";
 
 export interface CreateRequestInput {
   title: string;
@@ -195,7 +184,9 @@ export class RequestService {
     routedTeam: { select: { id: true, name: true, slug: true } },
     service: { select: { id: true, name: true, slug: true, expectedDeliverables: true, requiredReviews: true } },
     organization: { select: { id: true, name: true, isExternal: true, slug: true } },
-    project: { select: { id: true, code: true, status: true } },
+    // _count.tasks, because the screen needs to say "no tasks yet, so nobody
+    // can be assigned" — the single most common reason work stalls here.
+    project: { select: { id: true, code: true, status: true, _count: { select: { tasks: true } } } },
     stageEvents: {
       orderBy: { createdAt: "asc" } as const,
     },
@@ -592,7 +583,7 @@ export class RequestService {
   static async approve(args: { actorId: string; requestId: string }) {
     const before = await db.request.findUnique({ where: { id: args.requestId } });
     if (!before) throw new TRPCError({ code: "NOT_FOUND" });
-    if (!["submitted", "under_review", "scoping", "proposal", "pending_approval"].includes(before.stage)) {
+    if (!APPROVABLE_FROM.includes(before.stage)) {
       throw new TRPCError({ code: "BAD_REQUEST", message: `Request cannot be accepted from ${before.stage}.` });
     }
     const updated = await db.request.update({
