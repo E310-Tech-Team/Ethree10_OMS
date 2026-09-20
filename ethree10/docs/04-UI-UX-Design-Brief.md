@@ -121,6 +121,38 @@ Radius derives from `--radius`: `sm` = −4px, `md` = −2px, `lg` = base, `xl` 
 | `pop` | Menus, popovers, dialogs |
 | `glow` | Brand-teal ring for emphasis |
 
+### Glass
+
+The app uses a glass surface system. It is there to solve a layering problem
+rather than to decorate: a dense operations tool puts everything in a card on a
+flat field, so nothing tells a reader what sits on top of what. Letting an
+ambient brand field show through the chrome gives depth an actual job.
+
+| Piece | What it is |
+|---|---|
+| Ambient field | Three or four very large, very low alpha brand radials fixed to `body`. **This is what makes blur visible** — frosted panels over flat white look like nothing. |
+| `.glass` | Translucent tint + specular edge + real offset shadow. Panels, cards, the sidebar. |
+| `.glass-raised` | The same with a deeper shadow, for things that float: dialogs, popovers, menus. |
+| `.glass-inset` | Inputs and wells. Light passes through from behind, so there is no specular lip. |
+
+Three rules that keep it from failing the way this pattern usually does:
+
+1. **Elevation is declared once, by the shadow.** The hairline is a specular
+   edge — the lip of the pane catching light, brightest along the top — drawn
+   as a masked pseudo-element so it cannot be read as a second border.
+2. **Containers only.** A `backdrop-filter` per table row would be a
+   performance disaster and conceptually wrong: the pane is the panel, the data
+   sits on it.
+3. **Alphas are set by the contrast floor, not by taste.** The numbers in §7
+   were measured against the composited backdrop. Raising translucency past
+   them is how this pattern becomes unreadable.
+
+Browsers without `backdrop-filter` get opaque surfaces via `@supports not`,
+because the tint alone is washed out and no longer guarantees contrast.
+
+Any layout that paints its own opaque background cancels the effect for
+everything inside it — that is why the auth and app shells are transparent.
+
 ### Motion
 
 One keyframe, `fade-up` (8px rise, 400ms, `cubic-bezier(0.2,0.8,0.2,1)`), exposed through
@@ -165,10 +197,28 @@ Done:
 - Keyboard navigation and a global search shortcut
 
 Outstanding:
-- No contrast audit across all token pairs (lime on white is the likely failure)
-- No `prefers-reduced-motion` handling for `fade-up`
+- No full contrast audit across all token pairs (lime on white is the likely failure)
 - No screen-reader pass over the delivery flows
-- Focus-visible styling not verified on every interactive element
+
+Corrected 20 September 2026: this section previously claimed
+`prefers-reduced-motion` was unhandled and focus-visible unverified. Both were
+wrong — `app/globals.css` has carried a `prefers-reduced-motion` block that
+collapses every animation and transition to 1ms since before this document
+existed, and `:focus-visible` now carries an explicit themed ring.
+
+Measured during the glass work, against the real composited backdrop:
+
+| Pair | Light | Dark |
+|---|---|---|
+| Body text on glass | 16.2:1 | 13.2:1 |
+| Muted text on glass | 4.9:1 | 6.2:1 |
+| Placeholder on an inset control | 4.6:1 | 5.9:1 |
+| Primary button label | 4.7:1 | 9.1:1 |
+
+The primary button measured **4.17:1** before that pass — under the floor for a
+14px label. `--primary` moved from `176 95% 28%` to `26%`, which is 4.74:1. It
+pre-dated the glass work; compositing the translucent surfaces is what forced
+the number to be checked.
 
 ---
 

@@ -8,7 +8,10 @@ const Table = React.forwardRef<
   <div className="relative w-full overflow-auto">
     <table
       ref={ref}
-      className={cn("w-full caption-bottom text-sm", className)}
+      // tabular-nums so figures in a column line up digit over digit.
+      // Proportional numerals in a money or hours column are the detail that
+      // makes a data table read as unconsidered.
+      className={cn("w-full caption-bottom text-sm tabular-nums", className)}
       {...props}
     />
   </div>
@@ -19,7 +22,17 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props} />
+  // The header is the one row that stays put while the body scrolls, so it
+  // gets its own faint pane to sit on rather than letting rows slide under
+  // bare text.
+  <thead
+    ref={ref}
+    className={cn(
+      "bg-glass-header backdrop-blur-sm [&_tr]:border-b",
+      className,
+    )}
+    {...props}
+  />
 ));
 TableHeader.displayName = "TableHeader";
 
