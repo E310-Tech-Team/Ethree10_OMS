@@ -14,7 +14,7 @@ export function ClientMarketingNav() {
   const { t } = useTranslation();
 
   return (
-    <nav className="flex items-center gap-6">
+    <nav className="flex min-w-0 flex-wrap items-center justify-end gap-x-4 gap-y-2 sm:gap-x-6">
       {NAV.map((item) => {
         const label = t(item.labelKey);
         return (

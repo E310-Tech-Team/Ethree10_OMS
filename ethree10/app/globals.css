@@ -12,7 +12,11 @@
     --card-foreground: 209 87% 9%;
     --popover: 0 0% 100%;
     --popover-foreground: 209 87% 9%;
-    --primary: 176 95% 28%;
+    /* 26%, not 28%. White on the old teal measured 4.17:1 — under the 4.5
+       floor for the button label, which is 14px and therefore normal text.
+       At 26% it is 4.74:1. Pre-dates the glass work; measuring the
+       composite is what surfaced it. */
+    --primary: 176 95% 26%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 22% 94%;
     --secondary-foreground: 209 45% 15%;
@@ -38,6 +42,30 @@
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 209 48% 15%;
     --sidebar-ring: 176 84% 44%;
+
+    /* ── Glass ──────────────────────────────────────────────────────────────
+       Glass is here to solve a layering problem, not to decorate. A dense
+       operations tool puts everything in a card on a flat field, so nothing
+       tells a reader what sits on top of what. Letting an ambient brand field
+       show through the chrome gives depth an actual job: sidebar, page chrome
+       and panels read as separate planes at a glance.
+
+       The alphas are chosen so body text keeps >= 4.5:1 against the tint that
+       shows through. Raising translucency past these values is how this
+       pattern usually fails. */
+    --glass-bg: 0 0% 100%;
+    --glass-alpha: 0.72;
+    /* The hairline is a specular edge — where light catches the lip of the
+       pane. It is NOT the elevation; the shadow below is. Declaring both as
+       elevation is the ghost-card mistake. */
+    --glass-edge: 0 0% 100%;
+    --glass-edge-alpha: 0.65;
+    --glass-hairline: 209 30% 60%;
+    --glass-hairline-alpha: 0.18;
+    --glass-blur: 20px;
+    /* Offset and blur, so it reads as depth rather than a coloured halo. */
+    --glass-shadow: 0 1px 2px hsl(209 87% 9% / 0.04), 0 8px 24px hsl(209 87% 9% / 0.08);
+    --glass-shadow-raised: 0 2px 4px hsl(209 87% 9% / 0.05), 0 16px 48px hsl(209 87% 9% / 0.14);
   }
 
   .dark {
@@ -70,6 +98,18 @@
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 209 44% 14%;
     --sidebar-ring: 176 84% 44%;
+
+    /* Dark glass is darker than its surroundings, not lighter — a pane lit
+       from behind, not a white sheet dimmed. */
+    --glass-bg: 209 52% 10%;
+    --glass-alpha: 0.66;
+    --glass-edge: 176 60% 70%;
+    --glass-edge-alpha: 0.14;
+    --glass-hairline: 176 40% 70%;
+    --glass-hairline-alpha: 0.12;
+    --glass-blur: 22px;
+    --glass-shadow: 0 1px 2px hsl(209 90% 3% / 0.4), 0 8px 24px hsl(209 90% 3% / 0.45);
+    --glass-shadow-raised: 0 2px 4px hsl(209 90% 3% / 0.45), 0 16px 48px hsl(209 90% 3% / 0.6);
   }
 
 @layer base {
@@ -78,6 +118,26 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* The field the glass refracts.
+       Frosted panels over a flat white page look like nothing at all — blur
+       is only visible when there is something behind it to bend. Two very low
+       alpha brand washes, fixed so they do not travel with the scroll, give
+       every pane something to sit in front of. This is the reason the effect
+       reads as glass rather than as grey. */
+    background-image:
+      radial-gradient(70rem 48rem at 8% -10%, hsl(176 95% 30% / 0.30), transparent 58%),
+      radial-gradient(60rem 44rem at 96% 4%, hsl(209 80% 32% / 0.26), transparent 60%),
+      radial-gradient(52rem 40rem at 50% 108%, hsl(74 78% 60% / 0.20), transparent 58%),
+      radial-gradient(40rem 30rem at 78% 52%, hsl(176 80% 40% / 0.14), transparent 62%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+  .dark body {
+    background-image:
+      radial-gradient(70rem 48rem at 8% -10%, hsl(176 84% 44% / 0.22), transparent 58%),
+      radial-gradient(60rem 44rem at 96% 4%, hsl(209 70% 45% / 0.20), transparent 60%),
+      radial-gradient(52rem 40rem at 50% 108%, hsl(74 78% 60% / 0.10), transparent 58%),
+      radial-gradient(40rem 30rem at 78% 52%, hsl(176 70% 45% / 0.12), transparent 62%);
   }
 }
 
@@ -180,6 +240,79 @@
     animation-name: slide-in-from-left;
   }
 
+  /* ── Glass surfaces ───────────────────────────────────────────────────
+     One class, three jobs: a translucent tint, a specular edge, and a real
+     offset shadow. Elevation is declared once — by the shadow. The hairline
+     is the lip of the pane catching light, which is why it is brightest
+     along the top edge and fades round the sides.
+
+     Applied to CONTAINERS only. A backdrop-filter per table row would be
+     both a performance disaster and wrong: the pane is the panel, and the
+     data sits on it. */
+  .glass {
+    background-color: hsl(var(--glass-bg) / var(--glass-alpha));
+    border: 1px solid hsl(var(--glass-hairline) / var(--glass-hairline-alpha));
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+    position: relative;
+  }
+
+  /* The specular edge. A pseudo-element rather than a second border, so it
+     cannot be mistaken for elevation and does not fight the radius. */
+  .glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding-top: 1px;
+    background: linear-gradient(
+      to bottom,
+      hsl(var(--glass-edge) / var(--glass-edge-alpha)),
+      transparent 42%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Raised: dialogs, popovers, menus — anything that floats above the page. */
+  .glass-raised {
+    box-shadow: var(--glass-shadow-raised);
+  }
+
+  /* Inset: inputs and wells. Light passes through from behind rather than
+     bouncing off the front, so there is no specular lip. */
+  .glass-inset {
+    background-color: hsl(var(--glass-bg) / 0.55);
+    border: 1px solid hsl(var(--glass-hairline) / 0.22);
+    backdrop-filter: blur(10px) saturate(1.3);
+    -webkit-backdrop-filter: blur(10px) saturate(1.3);
+  }
+  .glass-inset:focus-within {
+    background-color: hsl(var(--glass-bg) / 0.82);
+  }
+
+  /* Without backdrop-filter the tint alone reads as washed-out and the text
+     contrast is no longer guaranteed, so those browsers get opaque surfaces.
+     Firefox before 103 and older Safari land here. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass,
+    .glass-inset {
+      background-color: hsl(var(--card));
+    }
+    .glass::before {
+      display: none;
+    }
+  }
+
+  .bg-glass-header {
+    background-color: hsl(var(--glass-bg) / 0.5);
+  }
+
   .surface-hover {
     @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-pop;
   }
@@ -206,6 +339,25 @@
   }
   ::selection {
     background: hsl(176 90% 36% / 0.22);
+  }
+  /* The caret is a brand surface too, and the browser default is a black bar
+     that belongs to no design system. */
+  input,
+  textarea,
+  [contenteditable] {
+    caret-color: hsl(var(--primary));
+  }
+  /* One focus ring, visible on glass. A ring alone can disappear against a
+     translucent pane, so it carries a faint halo to separate it from whatever
+     is showing through. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: calc(var(--radius) - 4px);
+  }
+  /* Scrollbars over glass need to read against whatever is behind them. */
+  *::-webkit-scrollbar-thumb {
+    background: hsl(209 30% 50% / 0.35);
   }
   /* Refined, brand-tinted scrollbars */
   * {

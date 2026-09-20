@@ -244,8 +244,12 @@ export function SidebarContent({ roles: serverRoles, isSuperAdmin: serverIsSuper
 
 /** Desktop sidebar rail — hidden below `lg`, where the mobile drawer takes over. */
 export function AppSidebar({ roles, isSuperAdmin }: RoleProps = {}) {
+  // The sidebar is the deepest plane, so it is the least translucent thing on
+  // the page — navigation should feel like the frame the work sits in, not
+  // another floating pane. The ambient field still reads through it enough to
+  // place it in the same space.
   return (
-    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex">
+    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border/60 bg-sidebar/85 text-sidebar-foreground backdrop-blur-xl backdrop-saturate-150 lg:flex">
       <SidebarContent roles={roles} isSuperAdmin={isSuperAdmin} />
     </aside>
   );

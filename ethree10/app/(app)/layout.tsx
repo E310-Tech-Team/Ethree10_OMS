@@ -54,7 +54,8 @@ export default async function AppLayout({
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 overflow-y-auto bg-background p-4 focus:outline-none md:p-6"
+          // No background: the body's ambient field has to reach the panes.
+          className="flex-1 overflow-y-auto p-4 focus:outline-none md:p-6"
         >
           <div className="mx-auto max-w-[1440px]">{children}</div>
         </main>

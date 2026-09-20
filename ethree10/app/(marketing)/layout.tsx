@@ -11,14 +11,18 @@ export default function MarketingLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+      {/* Sticky and frosted: the header is chrome, so it stays put and lets the
+          page pass beneath it rather than scrolling away as another block. */}
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-glass-header backdrop-blur-md backdrop-saturate-150">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-6 sm:py-4">
           {/* Same brand mark as the app sidebar, with an "AGENCY" suffix in
               place of the sidebar's "OPS". Dark variant here because the
               marketing header sits on a light surface. */}
-          <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
+          <Link href="/" className="flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-80">
             <E310Logo variant="dark" className="h-6 w-auto" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            {/* Hidden on the narrowest screens: at 375px it collided with the
+                nav, which neither element was allowed to shrink out of. */}
+            <span className="hidden text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:inline">
               Agency
             </span>
           </Link>
@@ -28,7 +32,7 @@ export default function MarketingLayout({
 
       <div className="flex-1">{children}</div>
 
-      <footer className="border-t bg-neutral-50">
+      <footer className="border-t border-border/60 bg-glass-header backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-8 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
             <E310Logo variant="dark" className="h-5 w-auto" />
