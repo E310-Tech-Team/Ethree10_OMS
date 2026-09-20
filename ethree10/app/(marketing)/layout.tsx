@@ -49,6 +49,18 @@ export default function MarketingLayout({
             <Link href="/login" className="hover:text-foreground">
               Sign in
             </Link>
+            {/*
+              /privacy and /terms existed but were linked from nowhere at all —
+              reachable only by typing the URL. A privacy notice nobody can find
+              is not serving its purpose, and Google's OAuth consent screen
+              review expects the policy to be reachable from the site itself.
+            */}
+            <Link href="/privacy" className="hover:text-foreground">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-foreground">
+              Terms
+            </Link>
           </nav>
         </div>
       </footer>
