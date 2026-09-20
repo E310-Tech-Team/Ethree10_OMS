@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { LoginForm } from "./login-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +51,26 @@ export default async function LoginPage({
               <LoginForm errorCode={errorCode ?? null} />
             </CardContent>
           </Card>
+        </AnimatedSection>
+
+        {/*
+          The auth route group has no footer, so this is the one page where
+          someone is asked to hand over a Google identity with no link to the
+          notice describing what happens to it. That is exactly the moment the
+          link is worth having.
+        */}
+        <AnimatedSection delay={200}>
+          <p className="text-center text-xs text-muted-foreground">
+            By signing in you agree to our{" "}
+            <Link href="/terms" className="underline underline-offset-4 hover:text-foreground">
+              terms of service
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
+              privacy notice
+            </Link>
+            .
+          </p>
         </AnimatedSection>
       </div>
     </AnimatedPage>
