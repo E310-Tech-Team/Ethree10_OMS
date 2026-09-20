@@ -86,7 +86,7 @@ The models keep their old names for now; the UI and roles use Branch/Department.
 
 ### Data access
 
-Staff queries are **agency-global** — there is no `workspaceId` and no `x-workspace-id` header. Use the `db` singleton from `server/db/client.ts`. (`scopedDb` did still exist, attached to every tRPC context, scoping reads but not writes and with a `membership` scope that could not run; it has now been deleted.) Where a role should only see part of the agency, scope explicitly (see `visibleTeamIds` in `server/trpc/routers/requests.ts`, which limits non-agency-wide roles to their own branches).
+Staff queries are **agency-global** — there is no `workspaceId` and no `x-workspace-id` header. Use the `db` singleton from `server/db/client.ts`. (`scopedDb` did still exist, attached to every tRPC context, scoping reads but not writes and with a `membership` scope that could not run; it has now been deleted.) Where a role should only see part of the agency, scope explicitly using `server/auth/visibility.ts`: `visibleTeamIds(userId)` for list queries, and `assertCanAccessTask` / `assertCanAccessRequest` for record access. Holding an action is not permission over every record — a branch head holds `task.read` for their own branch. Out-of-scope records return NOT_FOUND rather than FORBIDDEN, so an id cannot be used to enumerate what exists.
 
 Client data is grouped by `organizationId`. Clients have no accounts at all.
 
