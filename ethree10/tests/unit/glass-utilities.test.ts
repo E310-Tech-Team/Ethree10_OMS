@@ -59,6 +59,19 @@ describe("glass surfaces never touch positioning", () => {
     // A hairline border is the light edge, not the elevation.
     expect(glass).toContain("border: 1px solid");
   });
+
+  it("does not blur a panel with nothing behind it", () => {
+    // Cards sit on a plain page. Translucency there only hazes them, which is
+    // what made this read as a white overlay rather than as glass.
+    expect(block(".glass")).not.toContain("backdrop-filter");
+  });
+
+  it("keeps the blur where content genuinely passes behind", () => {
+    // Dialogs, popovers and menus float over the page; sticky chrome has rows
+    // sliding under it. Those are the only places the effect is real.
+    expect(block(".glass-raised")).toContain("backdrop-filter");
+    expect(block(".sidebar-surface")).toContain("backdrop-filter");
+  });
 });
 
 describe("the components that depend on their own positioning", () => {

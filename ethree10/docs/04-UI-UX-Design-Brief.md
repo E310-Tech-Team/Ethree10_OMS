@@ -121,63 +121,30 @@ Radius derives from `--radius`: `sm` = −4px, `md` = −2px, `lg` = base, `xl` 
 | `pop` | Menus, popovers, dialogs |
 | `glow` | Brand-teal ring for emphasis |
 
-### Glass
+### Surfaces
 
-The app uses a glass surface system. It is there to solve a layering problem
-rather than to decorate: a dense operations tool puts everything in a card on a
-flat field, so nothing tells a reader what sits on top of what. Letting an
-ambient brand field show through the chrome gives depth an actual job.
+There is no ambient tint and no glassmorphism on panels. That was tried and
+removed: an opaque-looking pane over a plain page is a white overlay, because
+blur is only visible when something passes behind it. Making the page colourful
+enough to refract was the only way to make it real, and the tint was not wanted.
 
-| Piece | What it is |
-|---|---|
-| Ambient field | Three or four very large, very low alpha brand radials fixed to `body`. **This is what makes blur visible** — frosted panels over flat white look like nothing. |
-| `.glass` | Translucent tint + specular edge + real offset shadow. Panels, cards, the sidebar. |
-| `.glass-raised` | The same with a deeper shadow, for things that float: dialogs, popovers, menus. |
-| `.glass-inset` | Inputs and wells. Light passes through from behind, so there is no specular lip. |
+So the surfaces are honest about what they are:
 
-**The canvas is the whole trick.** The first version put an 80%-white pane over
-a near-white page, which is a white overlay by arithmetic — no amount of blur
-makes that glass. The page itself is now a tinted mesh (`--background` is a
-soft slate, not white, under five brand washes at real strength), and panes sit
-at 62% so it reads through them.
+| Surface | Treatment | Why |
+|---|---|---|
+| Cards, panels | **Opaque**, hairline + specular lip + offset shadow | Nothing moves behind a card; translucency would only haze it |
+| Dialogs, popovers, menus | Translucent + blur | These genuinely float over page content |
+| Sticky headers, navigation rail | Translucent + blur | Rows scroll under them |
+| Inputs | Opaque well, one shade off the panel | |
 
-Translucency costs contrast, and the cost is paid **in the ink, not by making
-the glass opaque again**. Over the strongest wash behind a pane, muted text
-measured 4.2:1 and row dividers 1.6:1 at the old token values; `--muted-foreground`
-and `--table-divider` were darkened until both cleared the floor. Reaching for
-panel opacity instead is what produced the white overlay the first time.
+The specular lip is an `inset 0 1px 0` shadow, never a positioned
+pseudo-element: as a `::before` it forced `position: relative` on the utility,
+which silently overrode `.fixed` and left every dialog rendering inline in the
+page.
 
-Three rules that keep it from failing the way this pattern usually does:
+Elevation is declared once, by the shadow. The hairline is a light edge.
 
-1. **Elevation is declared once, by the shadow.** The hairline is a specular
-   edge — the lip of the pane catching light, brightest along the top — drawn
-   as a masked pseudo-element so it cannot be read as a second border.
-2. **Containers only.** A `backdrop-filter` per table row would be a
-   performance disaster and conceptually wrong: the pane is the panel, the data
-   sits on it.
-3. **Alphas are set by the contrast floor, not by taste.** The numbers in §7
-   were measured against the composited backdrop. Raising translucency past
-   them is how this pattern becomes unreadable.
-
-Browsers without `backdrop-filter` get opaque surfaces via `@supports not`,
-because the tint alone is washed out and no longer guarantees contrast.
-
-The **navigation rail** is the deepest plane and uses `.sidebar-surface`,
-written out in CSS rather than composed from `bg-sidebar/82`. An opacity
-modifier on a CSS-variable colour has to be generated per class; one stale build
-and the rail loses its background entirely, which is a transparent sidebar with
-unreadable text rather than a slightly-off tint.
-
-Its background was also lifted once the page around it got brighter — a
-near-black rail beside a light, tinted page stopped reading as a deep plane and
-started reading as a void cut out of the page. Section headings there carry
-their hierarchy through size, weight and tracking; dimming them as well had put
-them at 2.55:1.
-
-Any layout that paints its own opaque background cancels the effect for
-everything inside it — that is why the auth and app shells are transparent.
-
-### Motion
+### Motion### Motion
 
 One keyframe, `fade-up` (8px rise, 400ms, `cubic-bezier(0.2,0.8,0.2,1)`), exposed through
 `AnimatedPage` / `AnimatedSection` with a `delay` prop for staggering. Motion is for arrival
@@ -234,11 +201,11 @@ Measured during the glass work, against the real composited backdrop:
 
 | Pair | Light | Dark |
 |---|---|---|
-| Body text on glass | 13.8:1 | 11.5:1 |
-| Muted text on glass | 5.3:1 | 6.4:1 |
+| Body text on a panel | 18.0:1 | 11.5:1 |
+| Muted text on a panel | 6.9:1 | 6.4:1 |
 | Placeholder on an inset control | 4.6:1 | 5.9:1 |
 | Primary button label | 4.7:1 | 9.1:1 |
-| **Table row divider** | **2.4:1** | **2.5:1** |
+| **Table row divider** | **3.1:1** | **2.5:1** |
 | Sidebar nav label | 4.8:1 | 10.0:1 |
 | Sidebar section heading | 4.8:1 | 10.0:1 |
 
