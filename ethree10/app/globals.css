@@ -257,36 +257,31 @@
   .glass {
     background-color: hsl(var(--glass-bg) / var(--glass-alpha));
     border: 1px solid hsl(var(--glass-hairline) / var(--glass-hairline-alpha));
-    box-shadow: var(--glass-shadow);
+    /* The specular edge is an inset shadow, not a positioned pseudo-element.
+       It used to be a `::before` with `position: absolute`, which forced
+       `.glass` itself to declare `position: relative` — and because these
+       utilities are emitted after Tailwind's, that `relative` QUIETLY
+       OVERRODE `.fixed` on every element carrying both. DialogContent and the
+       install prompt were the casualties: both render `position: fixed` from a
+       class, so both fell into normal flow. A dialog appeared inline in the
+       page instead of centred over it.
+
+       An inset box-shadow draws the same 1px lip of light, composes with the
+       elevation shadow in one declaration, and touches no other property. A
+       utility that sets `position` as a side effect of wanting a decoration is
+       a trap; this one no longer does. */
+    box-shadow:
+      inset 0 1px 0 hsl(var(--glass-edge) / var(--glass-edge-alpha)),
+      var(--glass-shadow);
     backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
-    position: relative;
-  }
-
-  /* The specular edge. A pseudo-element rather than a second border, so it
-     cannot be mistaken for elevation and does not fight the radius. */
-  .glass::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding-top: 1px;
-    background: linear-gradient(
-      to bottom,
-      hsl(var(--glass-edge) / var(--glass-edge-alpha)),
-      transparent 42%
-    );
-    -webkit-mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
   }
 
   /* Raised: dialogs, popovers, menus — anything that floats above the page. */
   .glass-raised {
-    box-shadow: var(--glass-shadow-raised);
+    box-shadow:
+      inset 0 1px 0 hsl(var(--glass-edge) / var(--glass-edge-alpha)),
+      var(--glass-shadow-raised);
   }
 
   /* Inset: inputs and wells. Light passes through from behind rather than
@@ -308,9 +303,6 @@
     .glass,
     .glass-inset {
       background-color: hsl(var(--card));
-    }
-    .glass::before {
-      display: none;
     }
   }
 
