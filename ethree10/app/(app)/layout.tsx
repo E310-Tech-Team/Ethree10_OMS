@@ -56,7 +56,11 @@ export default async function AppLayout({
           id="main-content"
           tabIndex={-1}
           // No background: the body's ambient field has to reach the panes.
-          className="flex-1 overflow-y-auto p-4 pb-safe focus:outline-none md:p-6"
+          // overscroll-contain: reaching the bottom of a long page used to chain the
+          // scroll to the document, which then rubber-banded and exposed the
+          // canvas beneath the shell. It only happened on pages long enough to
+          // scroll, which is why it looked page-specific.
+          className="flex-1 overflow-y-auto overscroll-contain p-4 pb-safe focus:outline-none md:p-6"
         >
           <div className="mx-auto max-w-[1440px]">{children}</div>
           <InstallPrompt />

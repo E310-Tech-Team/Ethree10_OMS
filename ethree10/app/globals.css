@@ -6,7 +6,7 @@
    Declared outside @layer base so Tailwind's content purge never strips the
    runtime-only `.dark` selector (dark mode would silently break otherwise). */
 :root {
-    --background: 202 28% 90%;
+    --background: 210 24% 98%;
     --foreground: 209 87% 9%;
     --card: 0 0% 100%;
     --card-foreground: 209 87% 9%;
@@ -54,7 +54,7 @@
        shows through. Raising translucency past these values is how this
        pattern usually fails. */
     --glass-bg: 0 0% 100%;
-    --glass-alpha: 0.62;
+    --glass-alpha: 1;
     /* The hairline is a specular edge — where light catches the lip of the
        pane. It is NOT the elevation; the shadow below is. Declaring both as
        elevation is the ghost-card mistake. */
@@ -70,6 +70,7 @@
        of rules. The generic --border is deliberately lighter; it edges cards
        and inputs, where this weight would be heavy-handed. */
     --table-divider: 210 20% 58%;
+    --input-well: 210 24% 96%;
   }
 
   .dark {
@@ -106,7 +107,7 @@
     /* Dark glass is darker than its surroundings, not lighter — a pane lit
        from behind, not a white sheet dimmed. */
     --glass-bg: 209 52% 10%;
-    --glass-alpha: 0.58;
+    --glass-alpha: 1;
     --glass-edge: 176 60% 70%;
     --glass-edge-alpha: 0.14;
     --glass-hairline: 176 40% 70%;
@@ -115,36 +116,30 @@
     --glass-shadow: 0 1px 2px hsl(209 90% 3% / 0.4), 0 8px 24px hsl(209 90% 3% / 0.45);
     --glass-shadow-raised: 0 2px 4px hsl(209 90% 3% / 0.45), 0 16px 48px hsl(209 90% 3% / 0.6);
     --table-divider: 209 32% 42%;
+    --input-well: 209 40% 14%;
   }
 
 @layer base {
   * {
     @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground;
-    /* The field the glass refracts.
-       Frosted panels over a flat white page look like nothing at all — blur
-       is only visible when there is something behind it to bend. Two very low
-       alpha brand washes, fixed so they do not travel with the scroll, give
-       every pane something to sit in front of. This is the reason the effect
-       reads as glass rather than as grey. */
-    background-image:
-      radial-gradient(58rem 42rem at 6% -6%, hsl(176 92% 34% / 0.55), transparent 56%),
-      radial-gradient(52rem 40rem at 98% 2%, hsl(209 72% 34% / 0.48), transparent 58%),
-      radial-gradient(46rem 36rem at 46% 106%, hsl(74 74% 58% / 0.42), transparent 56%),
-      radial-gradient(34rem 28rem at 82% 58%, hsl(188 80% 46% / 0.34), transparent 60%),
-      radial-gradient(30rem 26rem at 22% 72%, hsl(258 60% 60% / 0.20), transparent 62%);
-    background-attachment: fixed;
-    background-repeat: no-repeat;
+  /* The app shell is `h-screen overflow-hidden`, so the document has nothing to
+     scroll — but it can still be DRAGGED past its bounds. macOS and iOS rubber-
+     band any scroll container by default, which pulls the whole shell up and
+     exposes the canvas beneath it. Nothing is scrolling; the page is bouncing,
+     and it reads exactly like a broken layout.
+     `overscroll-behavior: none` stops both the bounce and scroll chaining, so a
+     flick that reaches the end of a table or the sidebar does not then start
+     moving the page behind it. */
+  html {
+    height: 100%;
+    overscroll-behavior: none;
+    background-color: hsl(var(--background));
   }
-  .dark body {
-    background-image:
-      radial-gradient(58rem 42rem at 6% -6%, hsl(176 84% 44% / 0.34), transparent 56%),
-      radial-gradient(52rem 40rem at 98% 2%, hsl(209 70% 45% / 0.30), transparent 58%),
-      radial-gradient(46rem 36rem at 46% 106%, hsl(74 74% 58% / 0.16), transparent 56%),
-      radial-gradient(34rem 28rem at 82% 58%, hsl(188 80% 46% / 0.22), transparent 60%),
-      radial-gradient(30rem 26rem at 22% 72%, hsl(258 60% 60% / 0.18), transparent 62%);
+  body {
+    height: 100%;
+    overscroll-behavior: none;
+    @apply bg-background text-foreground;
   }
 }
 
@@ -247,64 +242,58 @@
     animation-name: slide-in-from-left;
   }
 
-  /* ── Glass surfaces ───────────────────────────────────────────────────
-     One class, three jobs: a translucent tint, a specular edge, and a real
-     offset shadow. Elevation is declared once — by the shadow. The hairline
-     is the lip of the pane catching light, which is why it is brightest
-     along the top edge and fades round the sides.
+  /* ── Surfaces ─────────────────────────────────────────────────────────
+     Frosted only where something genuinely passes behind.
 
-     Applied to CONTAINERS only. A backdrop-filter per table row would be
-     both a performance disaster and wrong: the pane is the panel, and the
-     data sits on it. */
+     The first version made every card translucent over a plain page. There is
+     nothing behind a card on a plain page, so all the translucency did was
+     haze it — which is exactly why it read as "a white overlay" rather than as
+     glass. Blur is only visible when there is something to bend, and a sticky
+     header with rows sliding under it has that; a card sitting on the page
+     does not.
+
+     So `.glass` is an opaque panel: a hairline, a specular lip, a real offset
+     shadow. `.glass-raised`, the sticky headers and the navigation rail keep
+     the blur, because page content does move behind those. */
   .glass {
     background-color: hsl(var(--glass-bg) / var(--glass-alpha));
     border: 1px solid hsl(var(--glass-hairline) / var(--glass-hairline-alpha));
-    /* The specular edge is an inset shadow, not a positioned pseudo-element.
-       It used to be a `::before` with `position: absolute`, which forced
-       `.glass` itself to declare `position: relative` — and because these
-       utilities are emitted after Tailwind's, that `relative` QUIETLY
-       OVERRODE `.fixed` on every element carrying both. DialogContent and the
-       install prompt were the casualties: both render `position: fixed` from a
-       class, so both fell into normal flow. A dialog appeared inline in the
-       page instead of centred over it.
-
-       An inset box-shadow draws the same 1px lip of light, composes with the
-       elevation shadow in one declaration, and touches no other property. A
-       utility that sets `position` as a side effect of wanting a decoration is
-       a trap; this one no longer does. */
+    /* The lip is an inset shadow rather than a positioned pseudo-element. As a
+       `::before` it forced `position: relative` on .glass, which silently
+       overrode `.fixed` and left every dialog rendering inline in the page. */
     box-shadow:
       inset 0 1px 0 hsl(var(--glass-edge) / var(--glass-edge-alpha)),
       var(--glass-shadow);
-    backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
   }
 
   /* Raised: dialogs, popovers, menus — anything that floats above the page. */
+  /* Dialogs, popovers and menus genuinely float over the page, so the blur
+     has something to act on and the translucency reads as depth. */
   .glass-raised {
+    background-color: hsl(var(--glass-bg) / 0.86);
     box-shadow:
       inset 0 1px 0 hsl(var(--glass-edge) / var(--glass-edge-alpha)),
       var(--glass-shadow-raised);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
   }
 
   /* Inset: inputs and wells. Light passes through from behind rather than
      bouncing off the front, so there is no specular lip. */
   .glass-inset {
-    background-color: hsl(var(--glass-bg) / 0.55);
-    border: 1px solid hsl(var(--glass-hairline) / 0.22);
-    backdrop-filter: blur(10px) saturate(1.3);
-    -webkit-backdrop-filter: blur(10px) saturate(1.3);
+    background-color: hsl(var(--input-well));
+    border: 1px solid hsl(var(--glass-hairline) / 0.3);
   }
   .glass-inset:focus-within {
-    background-color: hsl(var(--glass-bg) / 0.82);
+    background-color: hsl(var(--glass-bg));
   }
 
-  /* Without backdrop-filter the tint alone reads as washed-out and the text
-     contrast is no longer guaranteed, so those browsers get opaque surfaces.
-     Firefox before 103 and older Safari land here. */
+  /* Without backdrop-filter a translucent floating panel is unreadable over
+     text, so those browsers get an opaque one. Firefox before 103 and older
+     Safari land here. */
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .glass,
-    .glass-inset {
-      background-color: hsl(var(--card));
+    .glass-raised {
+      background-color: hsl(var(--glass-bg));
     }
   }
 

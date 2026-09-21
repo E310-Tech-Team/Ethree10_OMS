@@ -181,7 +181,7 @@ export function SidebarContent({ roles: serverRoles, isSuperAdmin: serverIsSuper
         </Link>
       </div>
 
-      <nav aria-label="Main navigation" className="flex-1 overflow-y-auto px-3 py-5">
+      <nav aria-label="Main navigation" className="flex-1 overflow-y-auto overscroll-contain px-3 py-5">
         {sections.map((section) => {
           const items = section.items.filter(canSee);
           if (items.length === 0) return null;
