@@ -187,6 +187,25 @@ export function evaluateEnvironmentReadiness(
     ),
   );
 
+  // Push is optional: without VAPID keys the app degrades to in-app and email
+  // notifications, which is a reduced service rather than a broken one. A warn,
+  // not a fail — the same reasoning as Paystack above. What it must not do is
+  // pass silently, because a push channel that is configured in the UI and
+  // sends nothing looks identical to one nobody turned on.
+  const vapidMissing = ["VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY"].filter((key) =>
+    isPlaceholder(env[key]),
+  );
+  checks.push(
+    check(
+      "notifications.push",
+      "Web Push keys",
+      vapidMissing.length === 0 ? "pass" : "warn",
+      vapidMissing.length === 0
+        ? "VAPID keys are configured; browsers can subscribe to push."
+        : `Push notifications are off until these are set: ${vapidMissing.join(", ")}. Generate a pair with \`pnpm exec web-push generate-vapid-keys\`. In-app and email notifications are unaffected.`,
+    ),
+  );
+
   // The provider this guards against signs anyone in from an email alone. The
   // code refuses it on a production domain regardless, so this is defence in
   // depth — but a deploy carrying the variable is a misconfiguration serious

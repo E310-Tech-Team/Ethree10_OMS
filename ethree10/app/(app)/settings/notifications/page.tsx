@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { PushToggle } from "@/components/settings/push-toggle";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -102,6 +103,15 @@ export default function NotificationSettingsPage() {
           Manage how and where you receive notifications.
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Push notifications</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PushToggle />
+        </CardContent>
+      </Card>
 
       {/* WhatsApp Setup Card */}
       <Card>

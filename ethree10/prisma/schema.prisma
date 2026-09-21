@@ -50,6 +50,7 @@ model User {
   updatedAt                  DateTime  @updatedAt
 
   memberships             Membership[]
+  pushSubscriptions       PushSubscription[]
   skills                  UserSkill[]
   notifications           Notification[]
   notificationPreferences NotificationPreference[]
@@ -1378,6 +1379,35 @@ model AuditLog {
 
   @@index([entityType, entityId])
   @@index([createdAt])
+}
+
+/// A browser's Web Push endpoint.
+///
+/// One row per browser, not per user: someone signed in on a laptop and a
+/// phone has two, and each has its own keys. The endpoint is the identity —
+/// it is a URL at the browser vendor's push service, and it is what the
+/// server posts to.
+model PushSubscription {
+  id         String    @id @default(cuid())
+  userId     String
+  /// Unique because a browser that re-subscribes hands back the same endpoint,
+  /// and two rows for one endpoint means the same device notified twice.
+  endpoint   String    @unique
+  /// Client public key and auth secret from the browser's subscription. Used to
+  /// encrypt the payload so the push service cannot read it.
+  p256dh     String
+  auth       String
+  /// What produced it, for pruning and for telling a user which device is which.
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  /// Set when the push service reports the endpoint is gone (404/410). Kept
+  /// rather than deleted so a device that stopped working is visible.
+  expiredAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiredAt])
 }
 
 model NotificationPreference {

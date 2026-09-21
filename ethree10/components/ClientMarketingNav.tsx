@@ -21,7 +21,7 @@ export function ClientMarketingNav() {
           <Link
             key={item.href}
             href={item.href}
-            className="text-sm text-muted-foreground hover:text-foreground"
+            className="inline-flex min-h-[44px] items-center text-sm text-muted-foreground transition-colors hover:text-foreground lg:min-h-0"
           >
             {label === item.labelKey ? item.fallback : label}
           </Link>
@@ -32,7 +32,7 @@ export function ClientMarketingNav() {
 
       <Link
         href="/login"
-        className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+        className="inline-flex min-h-[44px] items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 lg:min-h-0"
       >
         {t("nav.login") === "nav.login" ? "Sign in" : t("nav.login")}
       </Link>

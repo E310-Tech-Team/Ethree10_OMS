@@ -6,6 +6,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppTopbar } from "@/components/layout/app-topbar";
 
 import { db } from "@/server/db/client";
+import { InstallPrompt } from "@/components/layout/install-prompt";
 
 export default async function AppLayout({
   children,
@@ -55,9 +56,10 @@ export default async function AppLayout({
           id="main-content"
           tabIndex={-1}
           // No background: the body's ambient field has to reach the panes.
-          className="flex-1 overflow-y-auto p-4 focus:outline-none md:p-6"
+          className="flex-1 overflow-y-auto p-4 pb-safe focus:outline-none md:p-6"
         >
           <div className="mx-auto max-w-[1440px]">{children}</div>
+          <InstallPrompt />
         </main>
       </div>
     </div>

@@ -41,16 +41,16 @@ export default function MarketingLayout({
             </p>
           </div>
           <nav className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-            <Link href="/services" className="hover:text-foreground">
+            <Link href="/services" className="inline-flex min-h-[44px] items-center transition-colors hover:text-foreground lg:min-h-0">
               Services
             </Link>
-            <Link href="/about" className="hover:text-foreground">
+            <Link href="/about" className="inline-flex min-h-[44px] items-center transition-colors hover:text-foreground lg:min-h-0">
               About
             </Link>
-            <Link href="/request" className="hover:text-foreground">
+            <Link href="/request" className="inline-flex min-h-[44px] items-center transition-colors hover:text-foreground lg:min-h-0">
               Start a project
             </Link>
-            <Link href="/login" className="hover:text-foreground">
+            <Link href="/login" className="inline-flex min-h-[44px] items-center transition-colors hover:text-foreground lg:min-h-0">
               Sign in
             </Link>
             {/*
@@ -59,10 +59,10 @@ export default function MarketingLayout({
               is not serving its purpose, and Google's OAuth consent screen
               review expects the policy to be reachable from the site itself.
             */}
-            <Link href="/privacy" className="hover:text-foreground">
+            <Link href="/privacy" className="inline-flex min-h-[44px] items-center transition-colors hover:text-foreground lg:min-h-0">
               Privacy
             </Link>
-            <Link href="/terms" className="hover:text-foreground">
+            <Link href="/terms" className="inline-flex min-h-[44px] items-center transition-colors hover:text-foreground lg:min-h-0">
               Terms
             </Link>
           </nav>

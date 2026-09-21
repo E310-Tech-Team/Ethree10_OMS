@@ -20,6 +20,7 @@ import { templatesRouter } from "./templates";
 import { timeLogsRouter } from "./timeLogs";
 import { scorecardsRouter } from "./scorecards";
 import { whatsappRouter } from "./whatsapp";
+import { pushRouter } from "./push";
 import { preferencesRouter } from "./preferences";
 import { cmsRouter } from "./cms";
 import { invoicesRouter } from "./invoices";
@@ -55,6 +56,7 @@ export const appRouter = router({
   timeLogs: timeLogsRouter,
   scorecards: scorecardsRouter,
   whatsapp: whatsappRouter,
+  push: pushRouter,
   preferences: preferencesRouter,
   cms: cmsRouter,
   invoices: invoicesRouter,

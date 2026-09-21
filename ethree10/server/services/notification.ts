@@ -2,6 +2,7 @@ import type { NotificationKind } from "@prisma/client";
 import { db } from "@/server/db/client";
 import { EmailService } from "@/server/notifications/email";
 import { TwilioService } from "@/server/notifications/twilio";
+import { sendPushToUser } from "@/server/notifications/push";
 
 const DEDUP_WINDOW_MS = 60 * 60 * 1000; // 60 minutes
 
@@ -67,6 +68,7 @@ type DeliveryPreferences = {
 
 type NotificationDeliveryUpdates = {
   emailedAt?: Date;
+  pushedAt?: Date;
   whatsappAt?: Date;
 };
 
@@ -167,6 +169,21 @@ export class NotificationService {
           // Queued for later in a real system. Here we just drop or send anyway.
           console.log(`Quiet hours: Skipping WhatsApp for ${user.phone}`);
         }
+      }
+
+      if (prefs!.push) {
+        // No device check: sendPushToUser is a no-op when the user has no live
+        // subscription, and push is the one channel that needs no address —
+        // the browser registered itself.
+        const sent = await sendPushToUser(args.userId, {
+          title: args.title,
+          body: args.body ?? undefined,
+          url: args.link ?? undefined,
+          // Collapse repeats of the same thing on the same record instead of
+          // stacking six identical banners.
+          tag: args.entityId ? `${args.kind}:${args.entityId}` : args.kind,
+        });
+        if (sent) updates.pushedAt = new Date();
       }
 
       if (Object.keys(updates).length > 0) {
