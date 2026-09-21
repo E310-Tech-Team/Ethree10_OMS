@@ -21,6 +21,14 @@ on:
         description: "Department name, or 'none' to clear it."
         type: string
         required: false
+      set_lead_email:
+        description: "Email to make lead of a department. Must already be a member of it."
+        type: string
+        required: false
+      department:
+        description: "Department the lead applies to."
+        type: string
+        required: false
       execute:
         description: "Actually write. Unticked is a dry run."
         type: boolean
@@ -53,18 +61,25 @@ jobs:
         env:
           EMAIL: ${{ inputs.set_department_email }}
           TO: ${{ inputs.to }}
+          LEAD_EMAIL: ${{ inputs.set_lead_email }}
+          DEPARTMENT: ${{ inputs.department }}
           EXECUTE: ${{ inputs.execute }}
         run: |
           set -euo pipefail
-          if [ -n "$EMAIL" ] && ! printf '%s' "$EMAIL" | grep -Eq '^[A-Za-z0-9_.@+-]+$'; then
-            echo "Email may contain only address characters." >&2; exit 1
-          fi
-          if [ -n "$TO" ] && ! printf '%s' "$TO" | grep -Eq "^[A-Za-z0-9 &_.-]+$"; then
-            echo "Department name may contain only letters, digits, spaces and & _ . -" >&2; exit 1
-          fi
+          for v in "$EMAIL" "$LEAD_EMAIL"; do
+            if [ -n "$v" ] && ! printf '%s' "$v" | grep -Eq '^[A-Za-z0-9_.@+-]+$'; then
+              echo "Email may contain only address characters." >&2; exit 1
+            fi
+          done
+          for v in "$TO" "$DEPARTMENT"; do
+            if [ -n "$v" ] && ! printf '%s' "$v" | grep -Eq "^[A-Za-z0-9 &_.-]+$"; then
+              echo "Department name may contain only letters, digits, spaces and & _ . -" >&2; exit 1
+            fi
+          done
 
           ARGS=""
-          [ -n "$EMAIL" ] && ARGS="--set-department $EMAIL --to \"$TO\""
+          [ -n "$LEAD_EMAIL" ] && ARGS="--set-lead $LEAD_EMAIL --department \"$DEPARTMENT\""
+          [ -n "$EMAIL" ] && ARGS="$ARGS --set-department $EMAIL --to \"$TO\""
           [ "$EXECUTE" = "true" ] && ARGS="$ARGS --execute"
 
           ssh -i ~/.ssh/ethree10_deploy_key "${SSH_USER}@${{ secrets.VPS_HOST }}" \
