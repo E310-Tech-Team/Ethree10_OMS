@@ -6,7 +6,7 @@
    Declared outside @layer base so Tailwind's content purge never strips the
    runtime-only `.dark` selector (dark mode would silently break otherwise). */
 :root {
-    --background: 210 24% 98%;
+    --background: 202 28% 90%;
     --foreground: 209 87% 9%;
     --card: 0 0% 100%;
     --card-foreground: 209 87% 9%;
@@ -21,7 +21,7 @@
     --secondary: 210 20% 90%;
     --secondary-foreground: 209 45% 15%;
     --muted: 210 20% 92%;
-    --muted-foreground: 210 12% 42%;
+    --muted-foreground: 210 14% 36%;
     --accent: 210 22% 94%;
     --accent-foreground: 209 45% 15%;
     --destructive: 0 72% 51%;
@@ -54,22 +54,22 @@
        shows through. Raising translucency past these values is how this
        pattern usually fails. */
     --glass-bg: 0 0% 100%;
-    --glass-alpha: 0.80;
+    --glass-alpha: 0.62;
     /* The hairline is a specular edge — where light catches the lip of the
        pane. It is NOT the elevation; the shadow below is. Declaring both as
        elevation is the ghost-card mistake. */
     --glass-edge: 0 0% 100%;
-    --glass-edge-alpha: 0.65;
+    --glass-edge-alpha: 0.85;
     --glass-hairline: 209 30% 60%;
     --glass-hairline-alpha: 0.18;
-    --glass-blur: 20px;
+    --glass-blur: 28px;
     /* Offset and blur, so it reads as depth rather than a coloured halo. */
     --glass-shadow: 0 1px 2px hsl(209 87% 9% / 0.04), 0 8px 24px hsl(209 87% 9% / 0.08);
     --glass-shadow-raised: 0 2px 4px hsl(209 87% 9% / 0.05), 0 16px 48px hsl(209 87% 9% / 0.14);
     /* 1.97:1 against the panel — visible as structure without becoming a grid
        of rules. The generic --border is deliberately lighter; it edges cards
        and inputs, where this weight would be heavy-handed. */
-    --table-divider: 210 18% 72%;
+    --table-divider: 210 20% 58%;
   }
 
   .dark {
@@ -84,7 +84,7 @@
     --secondary: 209 35% 20%;
     --secondary-foreground: 210 16% 92%;
     --muted: 209 35% 18%;
-    --muted-foreground: 210 14% 64%;
+    --muted-foreground: 210 16% 70%;
     --accent: 209 35% 18%;
     --accent-foreground: 210 16% 92%;
     --destructive: 0 62% 47%;
@@ -106,15 +106,15 @@
     /* Dark glass is darker than its surroundings, not lighter — a pane lit
        from behind, not a white sheet dimmed. */
     --glass-bg: 209 52% 10%;
-    --glass-alpha: 0.74;
+    --glass-alpha: 0.58;
     --glass-edge: 176 60% 70%;
     --glass-edge-alpha: 0.14;
     --glass-hairline: 176 40% 70%;
     --glass-hairline-alpha: 0.12;
-    --glass-blur: 22px;
+    --glass-blur: 30px;
     --glass-shadow: 0 1px 2px hsl(209 90% 3% / 0.4), 0 8px 24px hsl(209 90% 3% / 0.45);
     --glass-shadow-raised: 0 2px 4px hsl(209 90% 3% / 0.45), 0 16px 48px hsl(209 90% 3% / 0.6);
-    --table-divider: 209 30% 34%;
+    --table-divider: 209 32% 42%;
   }
 
 @layer base {
@@ -130,19 +130,21 @@
        every pane something to sit in front of. This is the reason the effect
        reads as glass rather than as grey. */
     background-image:
-      radial-gradient(70rem 48rem at 8% -10%, hsl(176 95% 30% / 0.30), transparent 58%),
-      radial-gradient(60rem 44rem at 96% 4%, hsl(209 80% 32% / 0.26), transparent 60%),
-      radial-gradient(52rem 40rem at 50% 108%, hsl(74 78% 60% / 0.20), transparent 58%),
-      radial-gradient(40rem 30rem at 78% 52%, hsl(176 80% 40% / 0.14), transparent 62%);
+      radial-gradient(58rem 42rem at 6% -6%, hsl(176 92% 34% / 0.55), transparent 56%),
+      radial-gradient(52rem 40rem at 98% 2%, hsl(209 72% 34% / 0.48), transparent 58%),
+      radial-gradient(46rem 36rem at 46% 106%, hsl(74 74% 58% / 0.42), transparent 56%),
+      radial-gradient(34rem 28rem at 82% 58%, hsl(188 80% 46% / 0.34), transparent 60%),
+      radial-gradient(30rem 26rem at 22% 72%, hsl(258 60% 60% / 0.20), transparent 62%);
     background-attachment: fixed;
     background-repeat: no-repeat;
   }
   .dark body {
     background-image:
-      radial-gradient(70rem 48rem at 8% -10%, hsl(176 84% 44% / 0.22), transparent 58%),
-      radial-gradient(60rem 44rem at 96% 4%, hsl(209 70% 45% / 0.20), transparent 60%),
-      radial-gradient(52rem 40rem at 50% 108%, hsl(74 78% 60% / 0.10), transparent 58%),
-      radial-gradient(40rem 30rem at 78% 52%, hsl(176 70% 45% / 0.12), transparent 62%);
+      radial-gradient(58rem 42rem at 6% -6%, hsl(176 84% 44% / 0.34), transparent 56%),
+      radial-gradient(52rem 40rem at 98% 2%, hsl(209 70% 45% / 0.30), transparent 58%),
+      radial-gradient(46rem 36rem at 46% 106%, hsl(74 74% 58% / 0.16), transparent 56%),
+      radial-gradient(34rem 28rem at 82% 58%, hsl(188 80% 46% / 0.22), transparent 60%),
+      radial-gradient(30rem 26rem at 22% 72%, hsl(258 60% 60% / 0.18), transparent 62%);
   }
 }
 
