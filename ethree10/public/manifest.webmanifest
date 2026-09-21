@@ -1,21 +1,65 @@
 {
-  "name": "E310 \u2014 Operating Platform",
+  "id": "/dashboard",
+  "name": "E310 — Operating Platform",
   "short_name": "E310",
-  "description": "E310 \u2014 the all-in-one operating platform for requests, delivery and reporting.",
+  "description": "E310 — the all-in-one operating platform for requests, delivery and reporting.",
   "start_url": "/dashboard",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#F8FAFC",
-  "theme_color": "#1E1B4B",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#F7F9FA",
+  "theme_color": "#031629",
+  "categories": ["business", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "My Work",
+      "short_name": "My Work",
+      "description": "Tasks assigned to you",
+      "url": "/my-work",
+      "icons": [{ "src": "/icon-192-maskable.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Requests",
+      "short_name": "Requests",
+      "description": "Client requests and their stage",
+      "url": "/requests",
+      "icons": [{ "src": "/icon-192-maskable.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Notifications",
+      "short_name": "Alerts",
+      "description": "What needs your attention",
+      "url": "/notifications",
+      "icons": [{ "src": "/icon-192-maskable.png", "sizes": "192x192" }]
     }
   ]
 }

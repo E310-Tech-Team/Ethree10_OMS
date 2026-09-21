@@ -5,7 +5,7 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
+  <div className="relative w-full overflow-x-auto overscroll-x-contain">
     <table
       ref={ref}
       // tabular-nums so figures in a column line up digit over digit.
@@ -70,7 +70,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-10 px-3 text-left align-middle text-xs font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+      "h-10 whitespace-nowrap px-3 text-left align-middle text-xs font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
       className,
     )}
     {...props}
@@ -84,7 +84,11 @@ const TableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn("p-3 align-middle [&:has([role=checkbox])]:pr-0", className)}
+    // whitespace-nowrap by default: at 375px a long title wrapped to seven
+    // lines and turned every row into a tower, which is far harder to scan
+    // than scrolling the table sideways. Pass `whitespace-normal` on a cell
+    // that genuinely wants to wrap.
+    className={cn("whitespace-nowrap p-3 align-middle [&:has([role=checkbox])]:pr-0", className)}
     {...props}
   />
 ));

@@ -9,6 +9,13 @@ const serverSchema = z.object({
   NEXTAUTH_URL: z.string().url(),
   AUTH_GOOGLE_ID: z.string().optional(),
   AUTH_GOOGLE_SECRET: z.string().optional(),
+  // Web Push. The private key is a server secret; the public one is handed to
+  // every browser that subscribes and is not sensitive. Generate a pair with
+  // `pnpm exec web-push generate-vapid-keys`. Optional: without them push is a
+  // no-op that says so once, rather than a boot failure.
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().optional(),
 
   RESEND_API_KEY: z.string().min(1),
   EMAIL_FROM: z.string().min(1),

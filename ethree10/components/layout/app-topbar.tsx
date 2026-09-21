@@ -13,8 +13,10 @@ interface AppTopbarProps {
 }
 
 export function AppTopbar({ user }: AppTopbarProps) {
+  // min-h rather than h, so the notch inset adds to the bar instead of eating
+  // into its 4rem of content.
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border bg-background/80 px-4 backdrop-blur-md md:px-6">
+    <header className="sticky top-0 z-30 flex min-h-[4rem] items-center justify-between gap-4 border-b border-border bg-glass-header px-4 pt-safe backdrop-blur-md backdrop-saturate-150 md:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         <MobileNav />
 

@@ -326,6 +326,26 @@
      regenerated per class — one stale build and the rail loses its background
      entirely, which is a transparent sidebar with unreadable text rather than
      a slightly-off tint. Declaring it here cannot silently fail. */
+  /* ── Installed-app insets ─────────────────────────────────────────────
+     `viewport-fit=cover` lets the page paint into the notch and home-indicator
+     area, which is what stops a standalone install showing letterbox bars. The
+     cost is that content will sit *under* the cutout unless it is padded back
+     out. These are no-ops in a browser tab, where the insets are zero. */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .px-safe {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  /* For a sticky header: keep its own padding and add the inset on top. */
+  .pt-safe-offset {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+  }
+
   .sidebar-surface {
     background-color: hsl(var(--sidebar-background) / 0.82);
     backdrop-filter: blur(24px) saturate(1.5);

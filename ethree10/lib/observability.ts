@@ -51,6 +51,7 @@ export type CriticalJob =
   | "payment-confirmation"
   | "receipt-issuance"
   | "notification-worker"
+  | "push-send"
   | "integration-sync"
   | "file-storage"
   // Unhandled render failures caught by the route error boundaries.

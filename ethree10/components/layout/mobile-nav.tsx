@@ -23,7 +23,7 @@ export function MobileNav() {
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger
         aria-label="Open navigation menu"
-        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
+        className="inline-flex h-11 w-11 lg:h-9 lg:w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
       >
         <Menu className="h-5 w-5" strokeWidth={1.75} />
       </Dialog.Trigger>
