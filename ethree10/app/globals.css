@@ -18,15 +18,15 @@
        composite is what surfaced it. */
     --primary: 176 95% 26%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 22% 94%;
+    --secondary: 210 20% 90%;
     --secondary-foreground: 209 45% 15%;
-    --muted: 210 22% 95%;
+    --muted: 210 20% 92%;
     --muted-foreground: 210 12% 42%;
     --accent: 210 22% 94%;
     --accent-foreground: 209 45% 15%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 210 22% 90%;
+    --border: 210 18% 80%;
     --input: 210 22% 90%;
     --ring: 176 94% 32%;
     --radius: 0.75rem;
@@ -54,7 +54,7 @@
        shows through. Raising translucency past these values is how this
        pattern usually fails. */
     --glass-bg: 0 0% 100%;
-    --glass-alpha: 0.72;
+    --glass-alpha: 0.80;
     /* The hairline is a specular edge — where light catches the lip of the
        pane. It is NOT the elevation; the shadow below is. Declaring both as
        elevation is the ghost-card mistake. */
@@ -66,6 +66,10 @@
     /* Offset and blur, so it reads as depth rather than a coloured halo. */
     --glass-shadow: 0 1px 2px hsl(209 87% 9% / 0.04), 0 8px 24px hsl(209 87% 9% / 0.08);
     --glass-shadow-raised: 0 2px 4px hsl(209 87% 9% / 0.05), 0 16px 48px hsl(209 87% 9% / 0.14);
+    /* 1.97:1 against the panel — visible as structure without becoming a grid
+       of rules. The generic --border is deliberately lighter; it edges cards
+       and inputs, where this weight would be heavy-handed. */
+    --table-divider: 210 18% 72%;
   }
 
   .dark {
@@ -77,15 +81,15 @@
     --popover-foreground: 210 16% 92%;
     --primary: 175 84% 44%;
     --primary-foreground: 209 87% 9%;
-    --secondary: 209 35% 16%;
+    --secondary: 209 35% 20%;
     --secondary-foreground: 210 16% 92%;
-    --muted: 209 35% 15%;
+    --muted: 209 35% 18%;
     --muted-foreground: 210 14% 64%;
     --accent: 209 35% 18%;
     --accent-foreground: 210 16% 92%;
     --destructive: 0 62% 47%;
     --destructive-foreground: 0 0% 100%;
-    --border: 209 34% 18%;
+    --border: 209 30% 30%;
     --input: 209 34% 20%;
     --ring: 175 84% 44%;
     --brand-accent: 74 78% 66%;
@@ -102,7 +106,7 @@
     /* Dark glass is darker than its surroundings, not lighter — a pane lit
        from behind, not a white sheet dimmed. */
     --glass-bg: 209 52% 10%;
-    --glass-alpha: 0.66;
+    --glass-alpha: 0.74;
     --glass-edge: 176 60% 70%;
     --glass-edge-alpha: 0.14;
     --glass-hairline: 176 40% 70%;
@@ -110,6 +114,7 @@
     --glass-blur: 22px;
     --glass-shadow: 0 1px 2px hsl(209 90% 3% / 0.4), 0 8px 24px hsl(209 90% 3% / 0.45);
     --glass-shadow-raised: 0 2px 4px hsl(209 90% 3% / 0.45), 0 16px 48px hsl(209 90% 3% / 0.6);
+    --table-divider: 209 30% 34%;
   }
 
 @layer base {
@@ -309,8 +314,14 @@
     }
   }
 
+  /* The header row is a label strip, not a wash. At 0.5 it read as haze and
+     the column names floated over the data behind them. */
+  .table-divider {
+    border-color: hsl(var(--table-divider));
+  }
+
   .bg-glass-header {
-    background-color: hsl(var(--glass-bg) / 0.5);
+    background-color: hsl(var(--glass-bg) / 0.86);
   }
 
   .surface-hover {

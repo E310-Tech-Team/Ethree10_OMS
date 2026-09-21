@@ -210,10 +210,17 @@ Measured during the glass work, against the real composited backdrop:
 
 | Pair | Light | Dark |
 |---|---|---|
-| Body text on glass | 16.2:1 | 13.2:1 |
-| Muted text on glass | 4.9:1 | 6.2:1 |
+| Body text on glass | 17.5:1 | 15.0:1 |
+| Muted text on glass | 5.3:1 | 7.0:1 |
 | Placeholder on an inset control | 4.6:1 | 5.9:1 |
 | Primary button label | 4.7:1 | 9.1:1 |
+| **Table row divider** | **2.0:1** | **2.4:1** |
+
+Table dividers carry their own token, `--table-divider`, heavier than the
+generic `--border`. A row boundary is structure; at the generic hairline weight
+it measured **1.31:1** against the panel, which made a twelve-row table read as
+mush regardless of how opaque the panel behind it was. The generic border stays
+lighter because it edges cards and inputs, where this weight is heavy-handed.
 
 The primary button measured **4.17:1** before that pass — under the floor for a
 14px label. `--primary` moved from `176 95% 28%` to `26%`, which is 4.74:1. It
