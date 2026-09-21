@@ -34,13 +34,13 @@
     --brand-accent: 74 78% 66%;
     --brand-accent-foreground: 209 87% 9%;
     /* Sidebar is always the deep navy brand surface */
-    --sidebar-background: 209 87% 9%;
+    --sidebar-background: 209 55% 16%;
     --sidebar-foreground: 210 16% 76%;
     --sidebar-primary: 176 84% 44%;
     --sidebar-primary-foreground: 209 87% 9%;
-    --sidebar-accent: 209 56% 14%;
+    --sidebar-accent: 209 45% 24%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 209 48% 15%;
+    --sidebar-border: 209 38% 26%;
     --sidebar-ring: 176 84% 44%;
 
     /* ── Glass ──────────────────────────────────────────────────────────────
@@ -94,13 +94,13 @@
     --ring: 175 84% 44%;
     --brand-accent: 74 78% 66%;
     --brand-accent-foreground: 209 87% 9%;
-    --sidebar-background: 209 80% 6%;
+    --sidebar-background: 209 60% 9%;
     --sidebar-foreground: 210 16% 76%;
     --sidebar-primary: 176 84% 44%;
     --sidebar-primary-foreground: 209 87% 9%;
-    --sidebar-accent: 209 50% 13%;
+    --sidebar-accent: 209 45% 18%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 209 44% 14%;
+    --sidebar-border: 209 36% 20%;
     --sidebar-ring: 176 84% 44%;
 
     /* Dark glass is darker than its surroundings, not lighter — a pane lit
@@ -318,6 +318,23 @@
      the column names floated over the data behind them. */
   .table-divider {
     border-color: hsl(var(--table-divider));
+  }
+
+  /* The navigation rail.
+     Written out rather than composed from `bg-sidebar/82`, because the opacity
+     modifier on a CSS-variable colour is a Tailwind behaviour that has to be
+     regenerated per class — one stale build and the rail loses its background
+     entirely, which is a transparent sidebar with unreadable text rather than
+     a slightly-off tint. Declaring it here cannot silently fail. */
+  .sidebar-surface {
+    background-color: hsl(var(--sidebar-background) / 0.82);
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .sidebar-surface {
+      background-color: hsl(var(--sidebar-background));
+    }
   }
 
   .bg-glass-header {

@@ -189,7 +189,7 @@ export function SidebarContent({ roles: serverRoles, isSuperAdmin: serverIsSuper
             <div key={section.title} className="mb-6 last:mb-0">
               <p
                 id={`nav-section-${section.title.replace(/\s+/g, "-").toLowerCase()}`}
-                className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-sidebar-foreground/65"
+                className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-sidebar-foreground"
               >
                 {section.title}
               </p>
@@ -208,7 +208,7 @@ export function SidebarContent({ roles: serverRoles, isSuperAdmin: serverIsSuper
                           "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                           active
                             ? "bg-white/[0.06] text-white"
-                            : "text-sidebar-foreground/70 hover:bg-white/[0.04] hover:text-white",
+                            : "text-sidebar-foreground/90 hover:bg-white/[0.06] hover:text-white",
                         )}
                       >
                         {active && (
@@ -233,10 +233,10 @@ export function SidebarContent({ roles: serverRoles, isSuperAdmin: serverIsSuper
       </nav>
 
       <div className="border-t border-sidebar-border/70 px-6 py-4">
-        <p className="text-[11px] font-medium text-sidebar-foreground/70">
+        <p className="text-[11px] font-medium text-sidebar-foreground/85">
           E310 · Operating Platform
         </p>
-        <p className="text-[10px] text-sidebar-foreground/55">v0.1 — beta</p>
+        <p className="text-[10px] text-sidebar-foreground/75">v0.1 — beta</p>
       </div>
     </div>
   );
@@ -249,7 +249,7 @@ export function AppSidebar({ roles, isSuperAdmin }: RoleProps = {}) {
   // another floating pane. The ambient field still reads through it enough to
   // place it in the same space.
   return (
-    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border/60 bg-sidebar/85 text-sidebar-foreground backdrop-blur-xl backdrop-saturate-150 lg:flex">
+    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border/60 sidebar-surface text-sidebar-foreground lg:flex">
       <SidebarContent roles={roles} isSuperAdmin={isSuperAdmin} />
     </aside>
   );

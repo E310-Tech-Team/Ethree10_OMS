@@ -150,6 +150,18 @@ Three rules that keep it from failing the way this pattern usually does:
 Browsers without `backdrop-filter` get opaque surfaces via `@supports not`,
 because the tint alone is washed out and no longer guarantees contrast.
 
+The **navigation rail** is the deepest plane and uses `.sidebar-surface`,
+written out in CSS rather than composed from `bg-sidebar/82`. An opacity
+modifier on a CSS-variable colour has to be generated per class; one stale build
+and the rail loses its background entirely, which is a transparent sidebar with
+unreadable text rather than a slightly-off tint.
+
+Its background was also lifted once the page around it got brighter — a
+near-black rail beside a light, tinted page stopped reading as a deep plane and
+started reading as a void cut out of the page. Section headings there carry
+their hierarchy through size, weight and tracking; dimming them as well had put
+them at 2.55:1.
+
 Any layout that paints its own opaque background cancels the effect for
 everything inside it — that is why the auth and app shells are transparent.
 
@@ -215,6 +227,8 @@ Measured during the glass work, against the real composited backdrop:
 | Placeholder on an inset control | 4.6:1 | 5.9:1 |
 | Primary button label | 4.7:1 | 9.1:1 |
 | **Table row divider** | **2.0:1** | **2.4:1** |
+| Sidebar nav label | 4.8:1 | 10.0:1 |
+| Sidebar section heading | 4.8:1 | 10.0:1 |
 
 Table dividers carry their own token, `--table-divider`, heavier than the
 generic `--border`. A row boundary is structure; at the generic hairline weight
