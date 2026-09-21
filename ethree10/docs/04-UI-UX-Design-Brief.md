@@ -135,6 +135,18 @@ ambient brand field show through the chrome gives depth an actual job.
 | `.glass-raised` | The same with a deeper shadow, for things that float: dialogs, popovers, menus. |
 | `.glass-inset` | Inputs and wells. Light passes through from behind, so there is no specular lip. |
 
+**The canvas is the whole trick.** The first version put an 80%-white pane over
+a near-white page, which is a white overlay by arithmetic — no amount of blur
+makes that glass. The page itself is now a tinted mesh (`--background` is a
+soft slate, not white, under five brand washes at real strength), and panes sit
+at 62% so it reads through them.
+
+Translucency costs contrast, and the cost is paid **in the ink, not by making
+the glass opaque again**. Over the strongest wash behind a pane, muted text
+measured 4.2:1 and row dividers 1.6:1 at the old token values; `--muted-foreground`
+and `--table-divider` were darkened until both cleared the floor. Reaching for
+panel opacity instead is what produced the white overlay the first time.
+
 Three rules that keep it from failing the way this pattern usually does:
 
 1. **Elevation is declared once, by the shadow.** The hairline is a specular
@@ -222,11 +234,11 @@ Measured during the glass work, against the real composited backdrop:
 
 | Pair | Light | Dark |
 |---|---|---|
-| Body text on glass | 17.5:1 | 15.0:1 |
-| Muted text on glass | 5.3:1 | 7.0:1 |
+| Body text on glass | 13.8:1 | 11.5:1 |
+| Muted text on glass | 5.3:1 | 6.4:1 |
 | Placeholder on an inset control | 4.6:1 | 5.9:1 |
 | Primary button label | 4.7:1 | 9.1:1 |
-| **Table row divider** | **2.0:1** | **2.4:1** |
+| **Table row divider** | **2.4:1** | **2.5:1** |
 | Sidebar nav label | 4.8:1 | 10.0:1 |
 | Sidebar section heading | 4.8:1 | 10.0:1 |
 
