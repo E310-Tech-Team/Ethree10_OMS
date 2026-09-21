@@ -1,0 +1,79 @@
+name: Assign task
+
+# Propose an assignee for a task, or list who could take it.
+#
+# Assignment is deliberately two-step: someone proposes, a branch head decides.
+# A proposal is NOT an assignment — a task with one pending still reads as
+# unassigned to everyone except the person who made it, which is exactly the
+# confusion this workflow's output is written to prevent.
+#
+# It goes through AssignmentService rather than writing assigneeUserId
+# directly, so eligibility, the approval step, the audit entry and the
+# notification all happen as they would in the app.
+#
+# With no `to`/`by` it reports and writes nothing. With them it is still a dry
+# run unless `execute` is ticked.
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Task code, e.g. TSK-2026-00001"
+        type: string
+        required: true
+      to:
+        description: "Email of the person to propose. Blank lists who is eligible."
+        type: string
+        required: false
+      by:
+        description: "Email of the proposer. Needs task.assign; auto-approves if they could approve anyway."
+        type: string
+        required: false
+      execute:
+        description: "Actually propose. Unticked is a dry run."
+        type: boolean
+        required: false
+        default: false
+
+env:
+  SSH_USER: root
+
+jobs:
+  assign:
+    name: ${{ inputs.to != '' && 'Propose assignee' || 'List eligible people' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install SSH key
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/ethree10_deploy_key
+          chmod 600 ~/.ssh/ethree10_deploy_key
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Assign
+        # Inputs arrive as environment variables rather than being interpolated
+        # into the script body: a `${{ inputs.* }}` expression is substituted
+        # before the shell runs, so a crafted value becomes a command on a box
+        # this key has root on.
+        env:
+          TASK: ${{ inputs.task }}
+          TO: ${{ inputs.to }}
+          BY: ${{ inputs.by }}
+          EXECUTE: ${{ inputs.execute }}
+        run: |
+          set -euo pipefail
+          for v in "$TASK" "$TO" "$BY"; do
+            if [ -n "$v" ] && ! printf '%s' "$v" | grep -Eq '^[A-Za-z0-9_.@+-]+$'; then
+              echo "Inputs may contain only code and email characters." >&2
+              exit 1
+            fi
+          done
+
+          ARGS="--task $TASK"
+          [ -n "$TO" ] && ARGS="$ARGS --to $TO"
+          [ -n "$BY" ] && ARGS="$ARGS --by $BY"
+          [ "$EXECUTE" = "true" ] && ARGS="$ARGS --execute"
+
+          ssh -i ~/.ssh/ethree10_deploy_key "${SSH_USER}@${{ secrets.VPS_HOST }}" \
+            "cd /srv/ethree10/ethree10 && pnpm assign:task $ARGS"
