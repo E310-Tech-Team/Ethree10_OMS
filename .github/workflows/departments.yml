@@ -1,0 +1,71 @@
+name: Departments
+
+# The department structure, and who is actually in it.
+#
+# A task carries a department, and the app matches work to people through it.
+# Membership in a department is a separate field, and nothing forces the two to
+# agree — so a task can sit in a department nobody is in. That is invisible
+# from every screen: the task shows its department, the person shows their
+# branch, and neither says the department is empty.
+#
+# With no inputs it reports and writes nothing. With them it is still a dry run
+# unless `execute` is ticked.
+on:
+  workflow_dispatch:
+    inputs:
+      set_department_email:
+        description: "Email whose branch membership to move into a department. Blank just reports."
+        type: string
+        required: false
+      to:
+        description: "Department name, or 'none' to clear it."
+        type: string
+        required: false
+      execute:
+        description: "Actually write. Unticked is a dry run."
+        type: boolean
+        required: false
+        default: false
+
+env:
+  SSH_USER: root
+
+jobs:
+  departments:
+    name: ${{ inputs.set_department_email != '' && 'Set department' || 'Report structure' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install SSH key
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/ethree10_deploy_key
+          chmod 600 ~/.ssh/ethree10_deploy_key
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Run
+        # Inputs arrive as environment variables rather than being interpolated
+        # into the script body: a `${{ inputs.* }}` expression is substituted
+        # before the shell runs, so a crafted value becomes a command on a box
+        # this key has root on. A department name may contain spaces, so it is
+        # quoted on the remote side and checked for quote characters here.
+        env:
+          EMAIL: ${{ inputs.set_department_email }}
+          TO: ${{ inputs.to }}
+          EXECUTE: ${{ inputs.execute }}
+        run: |
+          set -euo pipefail
+          if [ -n "$EMAIL" ] && ! printf '%s' "$EMAIL" | grep -Eq '^[A-Za-z0-9_.@+-]+$'; then
+            echo "Email may contain only address characters." >&2; exit 1
+          fi
+          if [ -n "$TO" ] && ! printf '%s' "$TO" | grep -Eq "^[A-Za-z0-9 &_.-]+$"; then
+            echo "Department name may contain only letters, digits, spaces and & _ . -" >&2; exit 1
+          fi
+
+          ARGS=""
+          [ -n "$EMAIL" ] && ARGS="--set-department $EMAIL --to \"$TO\""
+          [ "$EXECUTE" = "true" ] && ARGS="$ARGS --execute"
+
+          ssh -i ~/.ssh/ethree10_deploy_key "${SSH_USER}@${{ secrets.VPS_HOST }}" \
+            "cd /srv/ethree10/ethree10 && pnpm departments $ARGS"
