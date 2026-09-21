@@ -18,6 +18,11 @@
  *
  *   pnpm departments --set-department user@x.org --to none --execute
  *     Clears it.
+ *
+ *   pnpm departments --set-lead user@x.org --department "Product Design" --execute
+ *     Makes them the department's lead. They must already be a member of it:
+ *     a lead who is not in the department they lead is how three of these
+ *     ended up leading a queue they cannot see in their own sidebar.
  */
 import { PrismaClient } from "@prisma/client";
 
@@ -74,7 +79,11 @@ async function report() {
       const taskCount = await db.task.count({ where: { subUnitId: dept.id } });
       const flag = inDept.length === 0 && taskCount > 0 ? "  <-- has tasks, NO MEMBERS" : "";
       console.log(`      ${dept.name}: ${inDept.length} members, ${taskCount} tasks${flag}`);
-      console.log(`         lead: ${lead?.email ?? "none"}`);
+      // A lead who is not a member of the department they lead does not see
+      // its work in their own views, which is silent in every screen.
+      const leadIsMember = lead ? inDept.some((m) => m.user.email === lead.email) : false;
+      const leadFlag = lead && !leadIsMember ? "  <-- NOT A MEMBER of it" : "";
+      console.log(`         lead: ${lead?.email ?? "none"}${leadFlag}`);
       for (const m of inDept) console.log(`         ${m.user.email} · ${m.role}`);
     }
 
@@ -195,7 +204,72 @@ async function setDepartment(email: string, deptName: string) {
   console.log(`\nUpdated ${eligible.length} membership(s).`);
 }
 
+async function setLead(email: string, deptName: string) {
+  const user = await db.user.findUnique({
+    where: { email },
+    select: { id: true, email: true, deactivatedAt: true },
+  });
+  if (!user) throw new Error(`No account for ${email}.`);
+  if (user.deactivatedAt) throw new Error(`${email} is deactivated.`);
+
+  const matches = await db.subUnit.findMany({
+    where: { name: { equals: deptName, mode: "insensitive" }, archivedAt: null },
+    select: { id: true, name: true, teamId: true, leadId: true, team: { select: { name: true } } },
+  });
+  if (matches.length === 0) throw new Error(`No department named "${deptName}".`);
+  if (matches.length > 1) {
+    throw new Error(
+      `"${deptName}" exists in more than one branch: ` +
+        matches.map((m) => m.team.name).join(", ") +
+        ". Departments are per-branch; this script cannot guess which.",
+    );
+  }
+  const dept = matches[0]!;
+
+  // A lead who is not a member of the department they lead does not see its
+  // work in their own views. Three departments here are in exactly that state,
+  // so this refuses to add a fourth.
+  const membership = await db.membership.findFirst({
+    where: {
+      userId: user.id,
+      subUnitId: dept.id,
+      removedAt: null,
+      acceptedAt: { not: null },
+    },
+    select: { role: true },
+  });
+  if (!membership) {
+    throw new Error(
+      `${email} is not a member of ${dept.name}. Put them in it first with ` +
+        `--set-department, or the lead cannot see the department's work.`,
+    );
+  }
+
+  const current = dept.leadId
+    ? await db.user.findUnique({ where: { id: dept.leadId }, select: { email: true } })
+    : null;
+
+  console.log(`${dept.name} (${dept.team.name})`);
+  console.log(`  lead: ${current?.email ?? "none"} -> ${user.email} (${membership.role})`);
+
+  if (!EXECUTE) {
+    console.log("\nDRY RUN — nothing written. Re-run with --execute.");
+    return;
+  }
+
+  await db.subUnit.update({ where: { id: dept.id }, data: { leadId: user.id } });
+  console.log("\nUpdated.");
+}
+
 async function main() {
+  const leadEmail = arg("set-lead");
+  if (leadEmail) {
+    const dept = arg("department");
+    if (!dept) throw new Error("--set-lead needs --department <name>.");
+    await setLead(leadEmail, dept);
+    console.log();
+  }
+
   const email = arg("set-department");
   if (email) {
     const to = arg("to");
