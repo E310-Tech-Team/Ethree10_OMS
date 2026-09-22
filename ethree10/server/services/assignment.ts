@@ -61,6 +61,42 @@ async function canDecideForBranch(userId: string, branchId: string | null): Prom
   });
 }
 
+/**
+ * Make `userId` the task's assignee, in both places that record it.
+ *
+ * `Task.assigneeUserId` is what the task detail page reads. `TaskContributor`
+ * is what /team/assignments and /team/reviews read — those print "Unassigned"
+ * when the contributor list is empty. Setting one without the other produces a
+ * task that is assigned on one screen and nobody's on another.
+ *
+ * TWO paths assign: approve(), and propose()'s auto-approve branch, which does
+ * NOT call approve(). Fixing only the first left the path the ops workflow
+ * actually uses still broken, which is what the integration tests caught.
+ * Hence one helper, called from both.
+ */
+async function setPrimaryAssignee(
+  tx: Prisma.TransactionClient,
+  taskId: string,
+  userId: string,
+): Promise<void> {
+  await tx.task.update({ where: { id: taskId }, data: { assigneeUserId: userId } });
+  await tx.taskContributor.updateMany({
+    where: { taskId, removedAt: null },
+    data: { isPrimary: false },
+  });
+  await tx.taskContributor.upsert({
+    where: {
+      taskId_userId_contributionRole: {
+        taskId,
+        userId,
+        contributionRole: "Primary contributor",
+      },
+    },
+    update: { isPrimary: true, removedAt: null },
+    create: { taskId, userId, contributionRole: "Primary contributor", isPrimary: true },
+  });
+}
+
 export class AssignmentService {
   /** The proposal currently awaiting a decision on a task, if any. */
   static async pendingFor(taskId: string) {
@@ -162,10 +198,7 @@ export class AssignmentService {
       });
 
       if (autoApprove) {
-        await tx.task.update({
-          where: { id: args.taskId },
-          data: { assigneeUserId: args.assigneeId },
-        });
+        await setPrimaryAssignee(tx, args.taskId, args.assigneeId);
       }
 
       return created;
@@ -235,39 +268,7 @@ export class AssignmentService {
           decisionNote: args.note?.trim() || null,
         },
       });
-      await tx.task.update({
-        where: { id: proposal.taskId },
-        data: { assigneeUserId: proposal.assigneeId },
-      });
-
-      // The contributor row is not bookkeeping — /team/assignments and
-      // /team/reviews render `task.contributors` and print "Unassigned" when it
-      // is empty. Setting assigneeUserId alone leaves a task that the detail
-      // page shows as assigned and the branch's own queues show as nobody's.
-      //
-      // TaskService.assign (the direct path) has always kept these in step.
-      // This path did not, so the two ways of assigning the same task produced
-      // different state.
-      await tx.taskContributor.updateMany({
-        where: { taskId: proposal.taskId, removedAt: null },
-        data: { isPrimary: false },
-      });
-      await tx.taskContributor.upsert({
-        where: {
-          taskId_userId_contributionRole: {
-            taskId: proposal.taskId,
-            userId: proposal.assigneeId,
-            contributionRole: "Primary contributor",
-          },
-        },
-        update: { isPrimary: true, removedAt: null },
-        create: {
-          taskId: proposal.taskId,
-          userId: proposal.assigneeId,
-          contributionRole: "Primary contributor",
-          isPrimary: true,
-        },
-      });
+      await setPrimaryAssignee(tx, proposal.taskId, proposal.assigneeId);
       return updated;
     });
 
