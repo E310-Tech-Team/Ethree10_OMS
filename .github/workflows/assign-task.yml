@@ -28,8 +28,13 @@ on:
         description: "Email of the proposer. Needs task.assign; auto-approves if they could approve anyway."
         type: string
         required: false
+      repair_contributors:
+        description: "Find tasks that have an assignee but no contributor row, and create it."
+        type: boolean
+        required: false
+        default: false
       execute:
-        description: "Actually propose. Unticked is a dry run."
+        description: "Actually write. Unticked is a dry run."
         type: boolean
         required: false
         default: false
@@ -58,6 +63,7 @@ jobs:
         # this key has root on.
         env:
           TASK: ${{ inputs.task }}
+          REPAIR: ${{ inputs.repair_contributors }}
           TO: ${{ inputs.to }}
           BY: ${{ inputs.by }}
           EXECUTE: ${{ inputs.execute }}
@@ -71,6 +77,7 @@ jobs:
           done
 
           ARGS="--task $TASK"
+          [ "$REPAIR" = "true" ] && ARGS="$ARGS --repair-contributors"
           [ -n "$TO" ] && ARGS="$ARGS --to $TO"
           [ -n "$BY" ] && ARGS="$ARGS --by $BY"
           [ "$EXECUTE" = "true" ] && ARGS="$ARGS --execute"

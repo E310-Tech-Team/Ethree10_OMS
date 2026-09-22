@@ -70,6 +70,27 @@ async function main() {
     console.log("  assignee: NONE");
   }
 
+  // The contributor rows, which are what /team/assignments and /team/reviews
+  // actually render. A task can have an assigneeUserId and no contributor row,
+  // and those pages then show it as "Unassigned" while the task detail page
+  // shows it assigned.
+  const contributors = await db.taskContributor.findMany({
+    where: { taskId: task.id, removedAt: null },
+    select: { contributionRole: true, isPrimary: true, user: { select: { email: true } } },
+    orderBy: [{ isPrimary: "desc" }, { assignedAt: "asc" }],
+  });
+  console.log(`  contributors: ${contributors.length}`);
+  for (const c of contributors) {
+    console.log(`     ${c.user.email} · ${c.contributionRole}${c.isPrimary ? " · PRIMARY" : ""}`);
+  }
+  if (task.assigneeUserId && contributors.length === 0) {
+    console.log(
+      "     ^ ASSIGNED BUT NO CONTRIBUTOR ROW. /team/assignments and" +
+        "\n       /team/reviews read contributors, so they show this task as" +
+        "\n       Unassigned. Run with --repair-contributors --execute to fix.",
+    );
+  }
+
   // A pending proposal is the state most often mistaken for "assigned".
   const pending = await AssignmentService.pendingFor(task.id);
   if (pending) {
@@ -105,6 +126,40 @@ async function main() {
   }
   for (const c of candidates) {
     console.log(`  ${c.user.email}  —  ${c.role}${c.subUnit ? ` · ${c.subUnit.name}` : ""}`);
+  }
+
+  if (process.argv.includes("--repair-contributors")) {
+    const orphans = await db.task.findMany({
+      where: { assigneeUserId: { not: null }, contributors: { none: { removedAt: null } } },
+      select: { id: true, code: true, assigneeUserId: true },
+    });
+    console.log(`\nTASKS ASSIGNED WITH NO CONTRIBUTOR ROW (${orphans.length})\n`);
+    for (const orphan of orphans) console.log(`  ${orphan.code}`);
+    if (orphans.length === 0) return;
+    if (!EXECUTE) {
+      console.log("\nDRY RUN — re-run with --execute to create the missing rows.");
+      return;
+    }
+    for (const orphan of orphans) {
+      await db.taskContributor.upsert({
+        where: {
+          taskId_userId_contributionRole: {
+            taskId: orphan.id,
+            userId: orphan.assigneeUserId!,
+            contributionRole: "Primary contributor",
+          },
+        },
+        update: { isPrimary: true, removedAt: null },
+        create: {
+          taskId: orphan.id,
+          userId: orphan.assigneeUserId!,
+          contributionRole: "Primary contributor",
+          isPrimary: true,
+        },
+      });
+    }
+    console.log(`\nCreated ${orphans.length} contributor row(s).`);
+    return;
   }
 
   const toEmail = arg("to");
