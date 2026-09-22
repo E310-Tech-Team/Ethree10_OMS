@@ -51,7 +51,8 @@
     "ops:report": "tsx scripts/ops-report.ts",
     "csp:violations": "tsx scripts/csp-violations.ts",
     "assign:task": "tsx scripts/assign-task.ts",
-    "departments": "tsx scripts/departments.ts"
+    "departments": "tsx scripts/departments.ts",
+    "probe:delivery": "tsx scripts/probe-delivery.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1058.0",

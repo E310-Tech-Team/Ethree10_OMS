@@ -1,0 +1,59 @@
+name: Probe delivery path
+
+# Walk one task the whole way — assign, log time, submit completion, review,
+# deliver — on a fixture that is deleted afterwards.
+#
+# The back half of the delivery path has never run in production, and it is the
+# half that writes people's names into the record. Walking the real task would
+# log hours its assignee never worked, record a completion they never
+# submitted, and at the `delivered` transition email the client that their work
+# is done. Audit rows are permanent by design and an email cannot be unsent, so
+# the proof happens somewhere disposable.
+#
+# The fixture owns everything it touches: two users on an undeliverable domain,
+# a request with no client email, and a teardown that removes every row
+# including the audit entries — they describe something that no longer exists.
+#
+# Unticked `execute` is a dry run.
+on:
+  workflow_dispatch:
+    inputs:
+      execute:
+        description: "Actually run the walk. Unticked describes it and stops."
+        type: boolean
+        required: false
+        default: false
+      keep:
+        description: "Leave the fixture in place for inspection instead of deleting it."
+        type: boolean
+        required: false
+        default: false
+
+env:
+  SSH_USER: root
+
+jobs:
+  probe:
+    name: Walk the delivery path
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install SSH key
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/ethree10_deploy_key
+          chmod 600 ~/.ssh/ethree10_deploy_key
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Probe
+        env:
+          EXECUTE: ${{ inputs.execute }}
+          KEEP: ${{ inputs.keep }}
+        run: |
+          set -euo pipefail
+          ARGS=""
+          [ "$EXECUTE" = "true" ] && ARGS="$ARGS --execute"
+          [ "$KEEP" = "true" ] && ARGS="$ARGS --keep"
+          ssh -i ~/.ssh/ethree10_deploy_key "${SSH_USER}@${{ secrets.VPS_HOST }}" \
+            "cd /srv/ethree10/ethree10 && pnpm probe:delivery $ARGS"
