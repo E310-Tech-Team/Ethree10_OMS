@@ -177,6 +177,15 @@ async function main() {
       return "status = done";
     });
 
+    // approved -> in_progress -> in_review -> delivered. The probe originally
+    // jumped from approved straight to in_review and the app refused it, which
+    // is the transition table doing its job: a request cannot be under review
+    // before anyone has started work on it.
+    await step("request → in_progress", async () => {
+      await RequestService.transition({ actorId: lead.id, requestId, toStage: "in_progress" });
+      return "in_progress";
+    });
+
     await step("request → in_review", async () => {
       await RequestService.transition({ actorId: lead.id, requestId, toStage: "in_review" });
       return "in_review";
