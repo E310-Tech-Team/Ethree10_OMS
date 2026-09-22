@@ -1,0 +1,78 @@
+name: Probe money path
+
+# Walk budget → invoice → payment → receipt → expense on a fixture that deletes
+# itself, and try every governance rule that is supposed to refuse.
+#
+# Production has zero invoices and zero receipts, so this path has never run
+# there. The happy path is the smaller half of what this checks: the valuable
+# assertions are the refusals — sending an invoice with no approved budget,
+# approving your own submission, delegating approval to the person who will
+# confirm the payment, paying an expense you requested, confirming a payment
+# twice, spending past the approved envelope.
+#
+# Three of those refusals cannot be reached by someone holding one role, because
+# RBAC turns them away before the governance rule runs. The fixture therefore
+# includes people wearing two hats, which the model permits and a small agency
+# does in practice.
+#
+# READ THIS BEFORE TICKING `execute`:
+#
+# Money notifications are deliberately wide — a confirmed payment tells every
+# Chief Executive, COO and Finance manager in the agency, and those kinds email
+# by default. The fixture's rows are deleted, but an email cannot be unsent, so
+# a real run tells real people that ₦150,000 landed against an invoice that no
+# longer exists. The probe refuses to do that unless `notify_staff` is ticked
+# too, and a dry run names exactly who would receive it.
+#
+# So: run it with nothing ticked first, read the list, then decide.
+on:
+  workflow_dispatch:
+    inputs:
+      execute:
+        description: "Actually walk the path. Unticked describes it and names who it would email."
+        type: boolean
+        required: false
+        default: false
+      notify_staff:
+        description: "Accept that real Finance and executive staff will be emailed about a fictional payment."
+        type: boolean
+        required: false
+        default: false
+      keep:
+        description: "Leave the fixture in place for inspection instead of deleting it."
+        type: boolean
+        required: false
+        default: false
+
+env:
+  SSH_USER: root
+
+jobs:
+  probe:
+    name: Walk the money path
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install SSH key
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/ethree10_deploy_key
+          chmod 600 ~/.ssh/ethree10_deploy_key
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      # Inputs travel as environment variables rather than being interpolated
+      # into the shell body: this step opens a root shell on the VPS.
+      - name: Probe
+        env:
+          EXECUTE: ${{ inputs.execute }}
+          NOTIFY_STAFF: ${{ inputs.notify_staff }}
+          KEEP: ${{ inputs.keep }}
+        run: |
+          set -euo pipefail
+          ARGS=""
+          [ "$EXECUTE" = "true" ] && ARGS="$ARGS --execute"
+          [ "$NOTIFY_STAFF" = "true" ] && ARGS="$ARGS --notify-staff"
+          [ "$KEEP" = "true" ] && ARGS="$ARGS --keep"
+          ssh -i ~/.ssh/ethree10_deploy_key "${SSH_USER}@${{ secrets.VPS_HOST }}" \
+            "cd /srv/ethree10/ethree10 && pnpm probe:money $ARGS"

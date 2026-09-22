@@ -1,7 +1,7 @@
 # 06 — Implementation Plan and Status
 
 **Product:** Ethree10 OMS (E310)
-**Last updated:** 21 September 2026
+**Last updated:** 22 September 2026
 **Production:** https://oms.ethree10.com — healthy, last three deploys green
 
 This is the living status document. Update it in the same session as any phase that lands.
@@ -108,6 +108,43 @@ platform, operational readiness. See the git history; none of it has changed.
 has been exercised once against a real invoice.
 
 Verify with the **Ops report** workflow.
+
+### 8b — Both paths proven on disposable fixtures ✅
+
+Neither path had ever run end to end, and neither could be walked on live records:
+delivery writes people's names into permanent audit rows and emails the client at
+`delivered`; money emails every executive and Finance manager that funds landed. So both
+were proven on fixtures that delete themselves.
+
+| Probe | Result |
+|---|---|
+| **Probe delivery path** — assign → log time → submit → review → deliver | ✅ 11/11 |
+| **Probe money path** — budget → invoice → payment → receipt → expense | ✅ 23/23 |
+
+The money probe is mostly refusals, because a happy path proves the code runs and not
+that the governance holds. Confirmed refused, by the rule itself rather than by RBAC:
+
+- an invoice sent with no budget, and with a budget nobody has approved
+- a submitter approving their own budget — *"You submitted this budget"*
+- delegating budget approval to Finance — *"a user cannot hold both `chief_executive`
+  and `finance_manager`"*, refused where it is **granted**, not where it is used
+- paying an expense you requested yourself — *"You requested this expense"*
+- confirming the same payment twice, and spending past the approved envelope
+
+Three of those are unreachable by anyone holding a single role: RBAC turns them away
+before the governance rule runs, so a probe using one-role actors passes for the wrong
+reason. The fixture uses people wearing two hats — which the model permits, and a small
+agency does in practice — to reach the guards themselves.
+
+> **The payment separation-of-duties rule cannot be violated by any supported route.**
+> `budget.approve` is the Chief Executive's alone, `payment.confirm` is Finance's alone,
+> holding both roles is blocked at the membership, and the one remaining way in — a
+> delegation — is refused at the grant. The check inside `confirmInvoicePayment` is the
+> bolt behind a locked door.
+
+Neither probe has been run against production. The money one would email real staff about
+a payment that never happened; its dry run names exactly who, and it refuses to proceed
+without `notify_staff`. Run it with nothing ticked first.
 
 ### 8a — Organisation structure ✅ partly
 
@@ -228,6 +265,8 @@ which is why it stays the priority.
 | Are backups good? | **Backup diagnostics** |
 | Would enforcing CSP break things? | **CSP violations** |
 | Do the money rules hold? | `pnpm verify:governance` |
+| Does the money path work end to end? | **Probe money path** — dry run first, it names who it emails |
+| Does the delivery path work end to end? | **Probe delivery path** |
 | Does everything pass? | `pnpm verify` |
 
 > Local development runs on **port 3010** (`.claude/launch.json`); port 3000 belongs to
