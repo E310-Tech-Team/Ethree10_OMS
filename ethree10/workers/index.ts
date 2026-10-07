@@ -75,9 +75,7 @@ for (const worker of [notificationsWorker, reportsWorker, integrationsWorker]) {
 
 logger.info("Workers running. Waiting for jobs…");
 
-// Recurring jobs are Job Schedulers, declared in ./schedules. Starting up also
-// clears the legacy repeatable jobs BullMQ v5 stored, which v6 can neither run
-// nor remove — see scheduleRecurringJobs.
+// Recurring jobs are Job Schedulers, declared in ./schedules.
 scheduleRecurringJobs(queues, logger).catch((err) => {
   logger.error({ err }, "Failed to schedule recurring jobs");
   captureCriticalFailure("report-cycle", err, { step: "schedule-recurring-jobs" });

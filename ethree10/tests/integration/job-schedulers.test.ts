@@ -3,13 +3,11 @@ import { Queue } from "bullmq";
 import { RECURRING_JOBS, SCHEDULE_TZ, scheduleRecurringJobs } from "@/workers/schedules";
 
 /**
- * The move from legacy repeatable jobs to Job Schedulers, against real Redis.
- *
- * Production Redis holds the four report jobs as legacy repeatables, created by
- * `queue.add(name, data, { repeat })`. BullMQ v6 cannot list or remove those,
- * and left in place they fire alongside the new schedulers. This seeds Redis
- * exactly as production has it, then checks the worker's startup leaves the
- * four schedulers and nothing else — and that a second start changes nothing.
+ * The recurring jobs as Job Schedulers, against real Redis: the worker's
+ * start-up leaves exactly the declared schedulers, each with one pending run,
+ * removes any scheduler nobody declares, and a second start changes nothing.
+ * (The move off legacy repeatables happened in the release before BullMQ 6,
+ * whose version of this test seeded them as production had them.)
  *
  * Runs only when REDIS_TEST_URL is set, so it can never touch a Redis named in
  * a developer's .env. Everything lives under a unique prefix, removed after.
@@ -37,16 +35,14 @@ describe.skipIf(!url)("recurring jobs as Job Schedulers", () => {
     }
   });
 
-  it("replaces the legacy repeatables production has with schedulers, and nothing else", async () => {
-    // As v5 stored them in production — plus one schedule nobody declares any more.
-    for (const job of RECURRING_JOBS) {
-      await queues[job.queue]!.add(job.id, {}, { repeat: { pattern: job.pattern, tz: SCHEDULE_TZ } });
-    }
-    await queues["reports"]!.add("retired-job", {}, { repeat: { pattern: "0 3 * * *", tz: SCHEDULE_TZ } });
-    expect((await queues["reports"]!.getRepeatableJobs()).length).toBe(RECURRING_JOBS.length + 1);
+  it("keeps the declared schedulers and removes a retired one", async () => {
+    // Legacy repeatables cannot exist on v6 — the previous release cleared them
+    // while still on v5. What v6 has to do is keep the schedule current: a
+    // scheduler for a job nobody declares any more must stop running.
+    await queues["reports"]!.upsertJobScheduler("retired-job", { pattern: "0 3 * * *", tz: SCHEDULE_TZ }, { name: "retired-job" });
 
     const first = await scheduleRecurringJobs(queues, quiet);
-    expect(first.removedLegacy).toHaveLength(RECURRING_JOBS.length + 1);
+    expect(first.removed).toEqual(["reports:retired-job"]);
 
     const schedulers = await queues["reports"]!.getJobSchedulers();
     expect(schedulers.map((s) => s.key).sort()).toEqual(RECURRING_JOBS.map((j) => j.id).sort());
@@ -56,8 +52,7 @@ describe.skipIf(!url)("recurring jobs as Job Schedulers", () => {
       expect(s.tz).toBe(SCHEDULE_TZ);
     }
 
-    // One pending run per schedule, named as the worker dispatches on — no
-    // leftover legacy run waiting to fire alongside it.
+    // One pending run per schedule, named as the worker dispatches on.
     const delayed = await queues["reports"]!.getDelayed();
     expect(delayed.map((j) => j.name).sort()).toEqual(RECURRING_JOBS.map((j) => j.id).sort());
   });
@@ -65,7 +60,7 @@ describe.skipIf(!url)("recurring jobs as Job Schedulers", () => {
   it("changes nothing when the worker starts again", async () => {
     const before = (await queues["reports"]!.getDelayed()).map((j) => `${j.name}@${j.timestamp + (j.delay ?? 0)}`).sort();
     const again = await scheduleRecurringJobs(queues, quiet);
-    expect(again.removedLegacy).toHaveLength(0);
+    expect(again.removed).toHaveLength(0);
     expect(await queues["reports"]!.getJobSchedulersCount()).toBe(RECURRING_JOBS.length);
     const after = (await queues["reports"]!.getDelayed()).map((j) => `${j.name}@${j.timestamp + (j.delay ?? 0)}`).sort();
     expect(after).toEqual(before);
