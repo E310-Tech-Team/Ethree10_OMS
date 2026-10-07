@@ -29,7 +29,12 @@ services:
       - "1025:1025"   # SMTP
 
   minio:
-    image: minio/minio
+    # Same build CI uses (.github/workflows/ci.yml): MinIO no longer publishes
+    # free images (minio/minio and quay.io/minio/minio answer 401) or binaries.
+    # Runs as root here only because the named volume below is created
+    # root-owned, and the image's own user (65532) could not write to it.
+    image: docker.io/chainguard/minio@sha256:e7ca559d9f7c0b5f24f5f669bb92f40f3ca88d56273b808bf3a7c116c17d2ffa
+    user: "0:0"
     restart: unless-stopped
     ports:
       - "9000:9000"
