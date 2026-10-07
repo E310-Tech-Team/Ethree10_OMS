@@ -116,10 +116,21 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      # For the Job Scheduler test, which skips itself without REDIS_TEST_URL.
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: ethree10
     env:
+      REDIS_TEST_URL: redis://localhost:6379
       TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5433/ethree10_test?schema=public
       DATABASE_URL: postgresql://postgres:postgres@localhost:5433/ethree10_test?schema=public
       DIRECT_URL: postgresql://postgres:postgres@localhost:5433/ethree10_test?schema=public
