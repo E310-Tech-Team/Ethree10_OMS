@@ -154,17 +154,28 @@ jobs:
         # Run as a step, not a `services:` container: MinIO needs the argument
         # `server /data`, and a service container cannot set a command.
         #
-        # From quay.io, pinned to a release. Docker Hub has now stopped serving
-        # this image to anonymous pulls ("pull access denied ... repository does
-        # not exist"), which broke every integration run on a green tree — the
-        # second time an unpinned MinIO tag has done that, after bitnami/minio
-        # :latest disappeared. quay.io is MinIO's own registry, and pinning a
-        # release means a tag moving upstream can no longer take CI down.
+        # Chainguard's build of MinIO, pinned by digest.
+        #
+        # MinIO withdrew its free distribution in late 2025: minio/minio on
+        # Docker Hub and quay.io/minio/minio both now answer 401 to anonymous
+        # pulls, and dl.min.io answers 410 Gone for the binaries. The quay.io
+        # release this used to pin broke every integration run from late
+        # September — the third time a MinIO image has vanished from under CI,
+        # after bitnami/minio:latest and Docker Hub's minio/minio.
+        #
+        # Chainguard builds MinIO from source and keeps it patched, but its free
+        # tier publishes only `latest`, so this pins the digest: a moving tag
+        # cannot change what CI runs. If that digest is ever withdrawn, take the
+        # current one (`docker buildx imagetools inspect chainguard/minio`), or
+        # fall back to docker.io/bitnamilegacy/minio, which is frozen.
+        #
+        # The image runs as uid 65532, which cannot create /data at the root of
+        # the filesystem — hence /tmp.
         run: |
           docker run -d --name minio -p 9000:9000 \
             -e MINIO_ROOT_USER=minioadmin \
             -e MINIO_ROOT_PASSWORD=minioadmin \
-            quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z server /data --address ":9000"
+            docker.io/chainguard/minio@sha256:e7ca559d9f7c0b5f24f5f669bb92f40f3ca88d56273b808bf3a7c116c17d2ffa server /tmp/minio-data --address ":9000"
           for _ in $(seq 1 30); do
             if curl -sf http://127.0.0.1:9000/minio/health/live >/dev/null; then
               echo "MinIO ready"; exit 0
