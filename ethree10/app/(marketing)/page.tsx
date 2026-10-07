@@ -57,7 +57,7 @@ export default async function MarketingHomePage() {
           <h2 className="text-2xl font-semibold tracking-tight">What we do</h2>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {SERVICES.map((s) => (
-              <div key={s.title} className="rounded-lg border bg-card p-6 shadow-sm">
+              <div key={s.title} className="rounded-lg border bg-card p-6 shadow-xs">
                 <h3 className="text-base font-semibold">{s.title}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{s.body}</p>
               </div>

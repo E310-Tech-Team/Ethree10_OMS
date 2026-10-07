@@ -152,7 +152,7 @@ export default function ProjectDetailPage() {
                     key={star}
                     type="button"
                     onClick={() => setCsatScore(star)}
-                    className="p-1 focus:outline-none"
+                    className="p-1 focus:outline-hidden"
                   >
                     <Star
                       className={`h-6 w-6 ${

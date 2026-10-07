@@ -17,7 +17,7 @@
 | API | tRPC | 11 | 33 routers, 187 procedures |
 | Data | Prisma + PostgreSQL | 6.19.3 | 1,428-line schema |
 | Auth | Auth.js (`next-auth`) | 4.24.15 | Custom adapter, JWT sessions |
-| Styling | Tailwind CSS + shadcn/ui | 3.4 | Radix primitives |
+| Styling | Tailwind CSS + shadcn/ui | 4.3 | Radix primitives. CSS-first config: `@theme` in `app/globals.css`, no `tailwind.config.ts` |
 | Forms | react-hook-form + Zod | | Zod also validates every tRPC input |
 | Jobs | BullMQ + Redis | | Separate worker process |
 | Charts | Recharts | | |
@@ -218,7 +218,7 @@ Manual `workflow_dispatch`, all read-only unless stated:
 | `super_admin` dual model | Boolean plus an empty permissions entry — two mechanisms for one idea |
 | Eleven root-SSH workflows | Aggregate blast radius |
 | CSP not enforced | Report-Only until real traffic produces a sample |
-| 5 open Dependabot PRs | Two are major bumps (Tailwind 4, BullMQ 6) needing review, not merge |
+| Major dependency bumps | Tailwind 4 and BullMQ 6 each need their own verification — see 06, Phase 11 |
 
 ---
 

@@ -40,7 +40,7 @@ export default async function LoginPage({
         </AnimatedSection>
 
         <AnimatedSection delay={120}>
-          <Card className="surface-hover border-border/60 shadow-sm">
+          <Card className="surface-hover">
             <CardHeader className="space-y-2">
               <CardTitle className="text-2xl">Sign in</CardTitle>
               <CardDescription>

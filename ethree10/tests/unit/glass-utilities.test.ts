@@ -25,12 +25,23 @@ import { describe, expect, it } from "vitest";
  */
 const css = () => readFileSync(join(process.cwd(), "app/globals.css"), "utf8");
 
-/** The body of a single top-level rule, by selector. */
+/**
+ * The body of a glass utility, by class selector. Under Tailwind 4 these are
+ * `@utility glass { … }` blocks rather than `.glass { … }` inside
+ * `@layer utilities`, so the block is found by name and read to its matching
+ * brace — nested rules included.
+ */
 function block(selector: string): string {
   const source = css();
-  const start = source.indexOf(`  ${selector} {`);
+  const head = `@utility ${selector.replace(/^\./, "")} {`;
+  const start = source.indexOf(head);
   if (start === -1) throw new Error(`no rule for ${selector}`);
-  return source.slice(start, source.indexOf("\n  }", start));
+  let depth = 0;
+  for (let i = start + head.length - 1; i < source.length; i++) {
+    if (source[i] === "{") depth++;
+    else if (source[i] === "}" && --depth === 0) return source.slice(start, i + 1);
+  }
+  throw new Error(`unterminated rule for ${selector}`);
 }
 
 describe("glass surfaces never touch positioning", () => {

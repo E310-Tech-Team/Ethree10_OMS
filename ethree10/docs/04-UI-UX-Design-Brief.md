@@ -3,8 +3,8 @@
 **Product:** Ethree10 OMS (E310)
 **Last updated:** 20 September 2026
 
-Source of truth for tokens is `tailwind.config.ts` and `app/globals.css`. This document
-explains the intent; the config is the implementation.
+Source of truth for tokens is the `@theme` blocks in `app/globals.css` (Tailwind 4 has no
+`tailwind.config.ts`). This document explains the intent; the stylesheet is the implementation.
 
 ---
 
@@ -36,7 +36,7 @@ hardcoded `E10` on the magic-link page was a real defect, fixed in PR #80.
 
 ## 3. Colour
 
-Three families, defined in `tailwind.config.ts`.
+Three families, defined in `@theme` in `app/globals.css`.
 
 ### Brand — teal (primary)
 

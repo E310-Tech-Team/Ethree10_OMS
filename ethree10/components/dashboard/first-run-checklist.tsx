@@ -21,7 +21,7 @@ export function FirstRunChecklist({ enabled }: { enabled: boolean }) {
   const doneCount = data.steps.filter((s) => s.done).length;
 
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">Finish setting up your agency</CardTitle>
         <CardDescription>

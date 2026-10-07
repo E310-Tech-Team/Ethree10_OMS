@@ -19,7 +19,7 @@ export default function MagicLinkSentPage() {
       */}
       <E310Logo variant="dark" className="mx-auto h-8 w-auto" />
 
-      <div className="rounded-lg border bg-card p-8 shadow-sm">
+      <div className="rounded-lg border bg-card p-8 shadow-xs">
         <div className="mb-4 flex justify-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100">
             <svg

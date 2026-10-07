@@ -28,7 +28,7 @@ const TableHeader = React.forwardRef<
   <thead
     ref={ref}
     className={cn(
-      "bg-glass-header backdrop-blur-sm [&_tr]:border-b [&_tr]:table-divider",
+      "bg-glass-header backdrop-blur-xs [&_tr]:border-b [&_tr]:table-divider",
       className,
     )}
     {...props}
@@ -70,7 +70,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-10 whitespace-nowrap px-3 text-left align-middle text-xs font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+      "h-10 whitespace-nowrap px-3 text-left align-middle text-xs font-medium text-muted-foreground has-[[role=checkbox]]:pr-0",
       className,
     )}
     {...props}
@@ -88,7 +88,7 @@ const TableCell = React.forwardRef<
     // lines and turned every row into a tower, which is far harder to scan
     // than scrolling the table sideways. Pass `whitespace-normal` on a cell
     // that genuinely wants to wrap.
-    className={cn("whitespace-nowrap p-3 align-middle [&:has([role=checkbox])]:pr-0", className)}
+    className={cn("whitespace-nowrap p-3 align-middle has-[[role=checkbox]]:pr-0", className)}
     {...props}
   />
 ));

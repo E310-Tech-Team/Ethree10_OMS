@@ -42,7 +42,7 @@ export default async function PublicInvoicePage({ params, searchParams }: Props)
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="shadow-lg border-2">
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between border-b pb-6">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-600 text-white">

@@ -207,8 +207,8 @@ export function SidebarContent({ roles: serverRoles, isSuperAdmin: serverIsSuper
                         className={cn(
                           "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                           active
-                            ? "bg-white/[0.06] text-white"
-                            : "text-sidebar-foreground/90 hover:bg-white/[0.06] hover:text-white",
+                            ? "bg-white/6 text-white"
+                            : "text-sidebar-foreground/90 hover:bg-white/6 hover:text-white",
                         )}
                       >
                         {active && (

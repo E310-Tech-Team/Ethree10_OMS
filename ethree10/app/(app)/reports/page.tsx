@@ -100,7 +100,7 @@ export default function ReportsPage() {
       </AnimatedSection>
 
       <AnimatedSection delay={160}>
-        <Card className="surface-hover border-border/60 shadow-sm">
+        <Card className="surface-hover">
           <CardHeader>
             <CardTitle>Report archive</CardTitle>
             <CardDescription>
