@@ -49,6 +49,18 @@ overrides:
   # 3.0.3, from 2024, is the latest. Reached only through eslint's glob
   # matching at build time; it sits inside the ratchet's allowance.
   #
+  # react-pdf: held below @react-pdf/textkit 6.4.2, the first release to
+  # depend on @react-pdf/hyphenate — which is ESM-only, exported for `import`
+  # and nothing else. The worker runs under tsx as CommonJS (`pnpm worker`),
+  # and with hyphenate in the tree it cannot load react-pdf at all:
+  # ERR_PACKAGE_PATH_NOT_EXPORTED at start-up, so no reports, overdue-invoice
+  # runs or reminders — while `next build`, plain `node`, and vitest all pass.
+  # Both pins satisfy every declared range (layout 4.7.1 and render 4.6.1 ask
+  # for textkit ^6.4.1). tests/unit/react-pdf-require.test.ts guards it, under
+  # tsx. Lift once hyphenate exports a `require`/`default` condition.
+  "@react-pdf/render": "4.6.1"
+  "@react-pdf/textkit": "6.4.1"
+  #
   # Across a major, because no patched release exists on the old line. Both
   # are verified by running what depends on them: the unit suite under
   # vitest 3 for tinypool; prisma validate / generate / migrate status for
