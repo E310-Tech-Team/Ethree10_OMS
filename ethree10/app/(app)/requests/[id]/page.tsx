@@ -122,10 +122,10 @@ export default function RequestDetailPage() {
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight">{request.title}</h1>
+            <h1 className="min-w-0 wrap-break-word text-2xl font-semibold tracking-tight">{request.title}</h1>
             <span className="font-mono text-xs text-muted-foreground">{request.code}</span>
           </div>
-          <p className="break-words text-sm text-muted-foreground">
+          <p className="wrap-break-word text-sm text-muted-foreground">
             {request.organization?.name} · submitted by{" "}
             {request.submitter?.name ?? request.requesterName ?? "—"} · {formatDate(request.createdAt)}
           </p>
@@ -160,11 +160,11 @@ export default function RequestDetailPage() {
               <CardTitle>Description</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="whitespace-pre-wrap break-words text-sm">{request.description}</p>
+              <p className="whitespace-pre-wrap wrap-break-word text-sm">{request.description}</p>
             </CardContent>
           </Card>
 
-          <Card><CardHeader><CardTitle>Requested outcome</CardTitle></CardHeader><CardContent className="space-y-4 text-sm"><div><strong>Outcome</strong><p className="whitespace-pre-wrap break-words text-muted-foreground">{request.expectedOutcome || "Not supplied"}</p></div><div><strong>Deliverables</strong><p className="whitespace-pre-wrap break-words text-muted-foreground">{request.expectedDeliverables || "Not supplied"}</p></div><div><strong>Acceptance criteria</strong><p className="whitespace-pre-wrap break-words text-muted-foreground">{request.acceptanceCriteria || "Not supplied"}</p></div>{request.supportingLinks.length > 0 && <div><strong>Supporting links</strong><ul className="list-disc pl-5">{request.supportingLinks.map((link) => <li key={link} className="min-w-0"><a className="break-all text-brand-600 hover:underline" href={link} target="_blank" rel="noreferrer">{link}</a></li>)}</ul></div>}</CardContent></Card>
+          <Card><CardHeader><CardTitle>Requested outcome</CardTitle></CardHeader><CardContent className="space-y-4 text-sm"><div><strong>Outcome</strong><p className="whitespace-pre-wrap wrap-break-word text-muted-foreground">{request.expectedOutcome || "Not supplied"}</p></div><div><strong>Deliverables</strong><p className="whitespace-pre-wrap wrap-break-word text-muted-foreground">{request.expectedDeliverables || "Not supplied"}</p></div><div><strong>Acceptance criteria</strong><p className="whitespace-pre-wrap wrap-break-word text-muted-foreground">{request.acceptanceCriteria || "Not supplied"}</p></div>{request.supportingLinks.length > 0 && <div><strong>Supporting links</strong><ul className="list-disc pl-5">{request.supportingLinks.map((link) => <li key={link} className="min-w-0"><a className="break-all text-brand-600 hover:underline" href={link} target="_blank" rel="noreferrer">{link}</a></li>)}</ul></div>}</CardContent></Card>
 
           <Card>
             <CardHeader>
@@ -214,7 +214,7 @@ export default function RequestDetailPage() {
                           {formatDateTime(comment.createdAt)}
                         </span>
                       </div>
-                      <p className="whitespace-pre-wrap break-words text-sm">{comment.body}</p>
+                      <p className="whitespace-pre-wrap wrap-break-word text-sm">{comment.body}</p>
                     </div>
                   );
                 })
@@ -254,7 +254,7 @@ export default function RequestDetailPage() {
                   <span className="w-40 shrink-0 text-muted-foreground">
                     {formatDateTime(event.createdAt)}
                   </span>
-                  <span className="min-w-0 break-words">
+                  <span className="min-w-0 wrap-break-word">
                     {event.fromStage ? `${humanize(event.fromStage)} → ` : ""}
                     <span className="font-medium">{humanize(event.toStage)}</span>
                     {event.note ? ` — ${event.note}` : ""}
@@ -308,7 +308,7 @@ export default function RequestDetailPage() {
                   <Separator />
                   <div className="space-y-2">
                     <div className="text-xs font-medium text-muted-foreground">Client</div>
-                    <p className="text-sm break-words">
+                    <p className="text-sm wrap-break-word">
                       {request.requesterName ?? "—"}
                       {request.requesterEmail && (
                         <span className="block break-all text-xs text-muted-foreground">{request.requesterEmail}</span>
@@ -439,7 +439,7 @@ function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <div className="mb-0.5 text-xs font-medium text-muted-foreground">{label}</div>
-      <div className="break-words">{value}</div>
+      <div className="wrap-break-word">{value}</div>
     </div>
   );
 }

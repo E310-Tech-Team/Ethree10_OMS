@@ -38,7 +38,7 @@ export function KanbanBoard({ tasks }: { tasks: KanbanTask[] }) {
                 <Link
                   key={task.id}
                   href={`/tasks/${task.id}`}
-                  className="block rounded-md border bg-card p-3 shadow-sm transition-colors hover:border-brand-300"
+                  className="block rounded-md border bg-card p-3 shadow-xs transition-colors hover:border-brand-300"
                 >
                   <p className="text-sm font-medium leading-snug">{task.title}</p>
                   <p className="mt-1 font-mono text-[10px] text-muted-foreground">{task.code}</p>

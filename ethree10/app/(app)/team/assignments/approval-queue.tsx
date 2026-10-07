@@ -106,7 +106,7 @@ export function ApprovalQueue() {
                   >
                     {item.task.code}
                   </Link>
-                  <span className="min-w-0 break-words font-medium">{item.task.title}</span>
+                  <span className="min-w-0 wrap-break-word font-medium">{item.task.title}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Proposed: <span className="font-medium text-foreground">{item.assignee.name}</span>

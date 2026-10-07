@@ -194,7 +194,7 @@ export default function DashboardPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr,0.8fr]">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.8fr]">
             <SurfaceCard title="Team intake queue" description="Requests that still need active team handling.">
               {teamData.incomingRequests.length === 0 ? (
                 <EmptyState message="No incoming requests need team attention right now." />
@@ -218,7 +218,7 @@ export default function DashboardPage() {
               )}
             </SurfaceCard>
 
-            <Card className="surface-hover border-border/60 shadow-sm">
+            <Card className="surface-hover">
               <CardHeader>
                 <CardTitle className="text-base">Latest KPI snapshot</CardTitle>
                 <CardDescription>Operational scorecard for the teams you lead.</CardDescription>
@@ -314,7 +314,7 @@ export default function DashboardPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr,0.85fr]">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr_0.85fr]">
             <SurfaceCard title="Cross-agency inbox" description="Requests that need routing, approval, or scope movement now.">
               {agencyData.crossAgencyInbox.length === 0 ? (
                 <EmptyState message="Inbox zero. No cross-agency request is waiting." />
@@ -484,7 +484,7 @@ function SurfaceCard({
   actionLabel?: string;
 }) {
   return (
-    <Card className="surface-hover border-border/60 shadow-sm">
+    <Card className="surface-hover">
       <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
         <div className="space-y-1">
           <CardTitle className="text-base">{title}</CardTitle>

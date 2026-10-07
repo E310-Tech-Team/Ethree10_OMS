@@ -80,7 +80,7 @@ export function InstallPrompt() {
   if (!event) return null;
 
   return (
-    <div className="glass fixed inset-x-4 bottom-4 z-40 flex items-center gap-3 rounded-xl p-3 pb-safe shadow-pop sm:left-auto sm:right-6 sm:w-80">
+    <div className="glass fixed inset-x-4 bottom-4 z-40 flex items-center gap-3 rounded-xl p-3 pb-safe sm:left-auto sm:right-6 sm:w-80">
       <Download className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">Install E310</p>

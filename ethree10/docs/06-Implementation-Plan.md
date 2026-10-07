@@ -218,7 +218,7 @@ Five Dependabot PRs are open, and they are **not** equivalent:
 | #51 | lucide-react 0.483 → 1.41 | Low risk; icon names may move |
 | #78 | 40 patch/minor updates | Probably fine, but 40 things at once on a live app |
 | #52 | **BullMQ 5 → 6** | Touches the worker that sends notifications. Test first. |
-| #53 | **Tailwind 3.4 → 4.3** | **Not a merge.** Rewrites the config format and the engine. This session alone hit `min-h-11` not existing and `bg-sidebar/82` not generating — a major bump would churn every surface just measured. |
+| #53 | **Tailwind 3.4 → 4.3** | Done on its branch. The official codemod, then a v3-equivalence layer in `app/globals.css` — each block closes a difference found by screenshotting v3 and v4 builds page by page and comparing every element's computed style. Before the layer: every page differed, up to 15.6%, and the app had lost its font. After: 42 of 44 page/viewport shots pixel-identical, the other two a timestamp and anti-aliasing. |
 
 Other debt:
 

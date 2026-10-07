@@ -129,7 +129,7 @@ export function CapabilityPanel({ serviceId }: { serviceId: string }) {
       )}
 
       <div className="flex flex-wrap items-end gap-2">
-        <div className="min-w-[12rem] flex-1">
+        <div className="min-w-48 flex-1">
           <Select value={pendingUserId} onValueChange={setPendingUserId}>
             <SelectTrigger className="h-8">
               <SelectValue placeholder="Add someone…" />
@@ -146,7 +146,7 @@ export function CapabilityPanel({ serviceId }: { serviceId: string }) {
           </Select>
         </div>
         <Select value={pendingLevel} onValueChange={(level) => setPendingLevel(level as SkillLevel)}>
-          <SelectTrigger className="h-8 w-[9.5rem]">
+          <SelectTrigger className="h-8 w-38">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -202,7 +202,7 @@ export function CapabilityPanel({ serviceId }: { serviceId: string }) {
                         })
                       }
                     >
-                      <SelectTrigger className="h-8 w-[9.5rem]">
+                      <SelectTrigger className="h-8 w-38">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
