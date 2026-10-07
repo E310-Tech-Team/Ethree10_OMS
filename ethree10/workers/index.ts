@@ -1,5 +1,6 @@
 import { Worker } from "bullmq";
 import { redisConnection, queues } from "./queues";
+import { scheduleRecurringJobs } from "./schedules";
 import { ReportService } from "../server/services/report";
 import { InvoiceService } from "../server/services/invoice";
 import { TaskService } from "../server/services/task";
@@ -74,38 +75,11 @@ for (const worker of [notificationsWorker, reportsWorker, integrationsWorker]) {
 
 logger.info("Workers running. Waiting for jobs…");
 
-// Generate the just-completed Lagos week after its Sunday cutoff.
-queues.reports.add("weekly-report", {}, {
-  repeat: {
-    pattern: "15 0 * * 1",
-    tz: "Africa/Lagos",
-  }
-}).catch(err => logger.error({ err }, "Failed to schedule weekly report job"));
-
-// Generate the just-completed Lagos month on the first day of the next month.
-queues.reports.add("monthly-report", {}, {
-  repeat: {
-    pattern: "30 0 1 * *",
-    tz: "Africa/Lagos",
-  }
-}).catch(err => logger.error({ err }, "Failed to schedule monthly report job"));
-
-// Flip overdue invoices daily at 06:00 Africa/Lagos
-queues.reports.add("mark-overdue-invoices", {}, {
-  repeat: {
-    pattern: "0 6 * * *",
-    tz: "Africa/Lagos",
-  }
-}).catch(err => logger.error({ err }, "Failed to schedule overdue-invoice job"));
-
-// Remind on work due within 48h, and chase anything already late. 07:00 local,
-// so it lands before the working day rather than overnight.
-queues.reports.add("task-due-reminders", {}, {
-  repeat: {
-    pattern: "0 7 * * *",
-    tz: "Africa/Lagos",
-  }
-}).catch(err => logger.error({ err }, "Failed to schedule task reminder job"));
+// Recurring jobs are Job Schedulers, declared in ./schedules.
+scheduleRecurringJobs(queues, logger).catch((err) => {
+  logger.error({ err }, "Failed to schedule recurring jobs");
+  captureCriticalFailure("report-cycle", err, { step: "schedule-recurring-jobs" });
+});
 
 process.on("SIGTERM", async () => {
   await Promise.all([
