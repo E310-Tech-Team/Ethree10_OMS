@@ -29,11 +29,32 @@ overrides:
   # holding nodemailer at 7.x to respect it keeps two high advisories that are
   # only patched in 9.x.
   "nodemailer": ">=9.1.0"
-  # Deliberately NOT overriding brace-expansion. Forcing it forward breaks
-  # minimatch@3, which eslint depends on, and `pnpm lint` dies with a
-  # FlatConfigArray error. The advisory is a denial of service in a build-time
-  # glob matcher — an attacker would need to control an eslint glob pattern.
-  # Not worth trading a working linter for.
+  # brace-expansion: forcing ONE version forward broke minimatch@3 (eslint's),
+  # and `pnpm lint` died with a FlatConfigArray error — so these are scoped to
+  # each major line instead, and each line moves only to its own patched
+  # release. minimatch@3 still gets a 1.x it understands.
+  "brace-expansion@<2": "^1.1.20"
+  "brace-expansion@>=2 <3": "^2.1.6"
+  "brace-expansion@>=3 <6": "^5.0.11"
+  # Advisories published late September 2026, which took the audit ratchet
+  # from 0 critical / 5 high to 4 / 16 and failed every open PR.
+  #
+  # Within the parent's own range:
+  "shell-quote": "^1.11.0"           # critical; via concurrently
+  "source-map-js": "^1.2.2"          # via prisma's config loader
+  "vite@<=6.4.2": "^6.4.3"           # via @vitejs/plugin-react / vitest
+  "sharp": "^0.35.5"                 # next 16.3.6 asks for ^0.35.4
+  #
+  # Not overridden: braces (GHSA-vfj7-8cjw-p6xm) has no patched release —
+  # 3.0.3, from 2024, is the latest. Reached only through eslint's glob
+  # matching at build time; it sits inside the ratchet's allowance.
+  #
+  # Across a major, because no patched release exists on the old line. Both
+  # are verified by running what depends on them: the unit suite under
+  # vitest 3 for tinypool; prisma validate / generate / migrate status for
+  # deepmerge-ts. Remove each once the parent moves on itself.
+  "tinypool@<2.1.2": "^2.1.2"        # critical (RCE via prototype pollution); vitest 3 asks for ^1.1.1
+  "deepmerge-ts@<8": "^8.0.0"        # @prisma/config 6.19 pins 7.1.5; CLI-only
   "browserslist": ">=4.28.7"
   "js-yaml": ">=4.3.1"
   "nanoid": ">=3.3.18"
